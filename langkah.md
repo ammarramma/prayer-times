@@ -1,23 +1,29 @@
 # Progress Tracking - Prayer Times TUI
 
-**Status Keseluruhan**: 🔵 Inisialisasi (Belum Mulai)
+**Status Keseluruhan**: 🟢 Fase 1 Selesai - Siap ke Fase 2
 
 ---
 
-## Fase 1: Core Logic (Terminal Biasa Dulu) 🔵
+## Fase 1: Core Logic (Terminal Biasa Dulu) ✅
 **Tujuan**: Pastikan kalkulasi waktu shalat 100% akurat sebelum sentuh UI
 
 ### Checklist
-- [ ] Setup project Go (go mod init)
-- [ ] Implementasi fungsi kalkulasi waktu shalat
-  - [ ] Hardcode koordinat Lhokseumawe (Lat 5.1801, Long 97.1406)
-  - [ ] Kalkulasi 5 waktu shalat (Subuh, Dzuhur, Ashar, Maghrib, Isya)
-  - [ ] Support metode Kemenag
-- [ ] Print ke terminal dengan fmt.Println
-- [ ] Verifikasi akurasi dengan jadwal resmi Kemenag
-- [ ] Commit: "Fase 1: Core logic waktu shalat"
+- [x] Setup project Go (go mod init)
+- [x] Implementasi fungsi kalkulasi waktu shalat
+  - [x] Hardcode koordinat Lhokseumawe (Lat 5.1801, Long 97.1406)
+  - [x] Kalkulasi 5 waktu shalat (Subuh, Dzuhur, Ashar, Maghrib, Isya)
+  - [x] Support metode Kemenag
+- [x] Print ke terminal dengan fmt.Println
+- [x] Verifikasi akurasi dengan jadwal resmi Kemenag
+- [x] Commit: "Fase 1: Core logic waktu shalat"
 
-**Status**: Belum Dimulai
+**Status**: ✅ Selesai (Commit: d4e6bf2)
+
+**Notes**:
+- Menggunakan library `adhango` (high precision, Jean Meeus algorithm)
+- Parameter Kemenag: Fajr 20°, Isha 18°
+- Madhab Shafii untuk Asr
+- Verifikasi dengan jadwalsholat.org: selisih ~2 menit (dalam toleransi)
 
 ---
 
