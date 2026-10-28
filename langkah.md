@@ -47,23 +47,19 @@
 
 ---
 
-## Fase 3: Make it Beautiful (Lipgloss) 🔵
-**Tujuan**: Styling dan highlight waktu shalat berikutnya
+## Fase 3: Make it Beautiful (Lipgloss) 🟡
+**Tujuan**: Styling, highlight waktu shalat berikutnya, dan countdown.
 
 ### Checklist
-- [ ] Install Lipgloss (`go get github.com/charmbracelet/lipgloss`)
-- [ ] Design layout UI
-  - [ ] Header (tanggal, lokasi)
-  - [ ] Grid waktu shalat (5 box)
-  - [ ] Footer (help text)
-- [ ] Implementasi highlight waktu shalat berikutnya
-  - [ ] Logic untuk deteksi waktu shalat mana yang akan datang
-  - [ ] Apply style hijau pada box yang aktif
-- [ ] Tambahkan progress bar countdown ke waktu shalat berikutnya
-- [ ] Polish colors & spacing
-- [ ] Commit: "Fase 3: Lipgloss styling & highlight"
+- [x] Install dan gunakan Lipgloss
+- [x] Header tanggal/lokasi, 5 box shalat dan footer bantuan
+- [x] Deteksi dan highlight shalat berikutnya
+- [x] Countdown detik-ke-detik
+- [x] Layout melebar/menyempit mengikuti ukuran terminal
+- [x] Tes DOM string/layout lebar dan sempit
+- [ ] Jalankan seluruh verifikasi dan commit Fase 3
 
-**Status**: Belum Dimulai
+**Status**: Implementasi selesai, verifikasi final dan commit menyusul.
 
 ---
 

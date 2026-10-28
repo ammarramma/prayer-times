@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -38,6 +39,24 @@ func TestNavigationAndQuit(t *testing.T) {
 	}
 	if got := model.View(); got != "" {
 		t.Errorf("View setelah quit = %q, mau kosong", got)
+	}
+}
+
+func TestLipglossViewShowsUpcomingAndCountdown(t *testing.T) {
+	location := prayer.DefaultLocation()
+	date := time.Date(2026, time.October, 28, 0, 0, 0, 0, time.FixedZone("test", 7*60*60))
+	model := New(location, prayer.DefaultOptions(prayer.MethodKemenag), date)
+	model.now = time.Date(2026, time.October, 28, 4, 0, 0, 0, time.FixedZone("test", 7*60*60))
+	model.Width = 100
+	view := model.View()
+	for _, want := range []string{"JADWAL WAKTU SHALAT", "Lhokseumawe", "Subuh", "BERIKUTNYA", "Menuju Subuh: 01:"} {
+		if !strings.Contains(view, want) {
+			t.Errorf("View tidak memuat %q: %s", want, view)
+		}
+	}
+	model.Width = 40
+	if view = model.View(); !strings.Contains(view, "Isya") {
+		t.Errorf("layout sempit tidak memuat shalat: %s", view)
 	}
 }
 
