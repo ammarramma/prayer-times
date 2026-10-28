@@ -35,6 +35,7 @@ Daftar flag:
 
 | Flag | Default | Keterangan |
 | --- | --- | --- |
+| `-config` | `~/.config/prayer-times/config.json` | Path config JSON; mengikuti direktori config OS |
 | `-name` | `Lhokseumawe` | Nama kota/lokasi |
 | `-lat` | `5.1801` | Lintang desimal, −90 sampai 90 |
 | `-lon` | `97.1406` | Bujur desimal, −180 sampai 180 |
@@ -44,7 +45,25 @@ Daftar flag:
 | `-high-latitude` | `middle_of_the_night` | `middle_of_the_night`, `seventh_of_the_night`, `twilight_angle` |
 | `-ihtiyati` | `2` | Menit koreksi khusus Kemenag; nilai metode lain diabaikan |
 | `-imsak` | `false` | Tampilkan Imsak = Subuh −10 menit |
-| `-date` | Hari ini di zona lokasi | Tanggal Gregorian `YYYY-MM-DD` |
+| `-date` | Hari ini di zona lokasi | Tanggal Gregorian `YYYY-MM-DD`; menghasilkan output sekali jalan |
+| `-set-config` | `false` | Simpan nilai config/flag ke config lalu keluar |
+
+Buat atau perbarui konfigurasi melalui flags, misalnya:
+
+```bash
+go run . -set-config -name London -lat 51.5072 -lon -0.1276 -tz Europe/London -method mwl
+```
+
+Berkas config memakai JSON bertingkat, misalnya:
+
+```json
+{
+  "location": { "name": "London", "latitude": 51.5072, "longitude": -0.1276, "timezone": "Europe/London" },
+  "options": { "method": "mwl", "madhab": "shafii", "high_latitude_rule": "middle_of_the_night", "ihtiyati_minutes": 0, "include_imsak": false }
+}
+```
+
+Flags yang ditentukan selalu mengesampingkan nilai file config; ketika file belum ada, default kembali ke Lhokseumawe.
 
 Contoh metode lainnya: `umm_al_qura`, `egyptian`, `karachi`, `isna`, `singapore`, `dubai`, `moonsighting_committee`, `kuwait`, `qatar`, `uoif`.
 

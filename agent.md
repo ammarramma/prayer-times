@@ -7,7 +7,7 @@ Aplikasi jadwal waktu shalat worldwide yang mendukung kota mana pun dengan koord
 - **Bahasa**: Go
 - **TUI Framework**: Bubble Tea (arsitektur ELM: Model, Update, View)
 - **Styling**: Lipgloss (Charmbracelet)
-- **Config Management**: Viper
+- **Config Management**: Viper (`~/.config/prayer-times/config.json`)
 - **Target Platform**: Linux (khususnya Arch Linux via AUR)
 
 ## Lokasi dan Kalkulasi
@@ -27,8 +27,9 @@ prayer-times/
 ├── main.go           # Entry point aplikasi
 ├── internal/
 │   ├── prayer/       # Core logic kalkulasi waktu shalat
-│   ├── tui/          # Bubble Tea components
-│   └── config/       # Config management (Viper)
+│   ├── tui/          # Bubble Tea components dan styling Lipgloss
+│   ├── i18n/         # String label per locale
+│   └── config/       # Struktur dan config JSON melalui Viper
 ├── go.mod
 ├── go.sum
 └── PKGBUILD          # (Fase 5) Package build script untuk AUR

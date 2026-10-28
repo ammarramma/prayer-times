@@ -64,20 +64,20 @@
 ---
 
 ## Fase 4: Konfigurasi User 🔵
-**Tujuan**: User bisa set lokasi & metode kalkulasi sendiri
+**Tujuan**: User bisa menyimpan lokasi dan seluruh opsi kalkulasi sendiri.
 
 ### Checklist
-- [ ] Install Viper (`go get github.com/spf13/viper`)
-- [ ] Buat struktur config
-  - [ ] Path: `~/.config/prayer-times/config.json`
-  - [ ] Fields: latitude, longitude, calculation_method
-- [ ] Implementasi read config dengan fallback ke default (Lhokseumawe)
-- [ ] Buat command untuk set config (misal: `prayer-times config set`)
-- [ ] Update core logic untuk gunakan config user
-- [ ] Dokumentasi config di README
-- [ ] Commit: "Fase 4: User configuration dengan Viper"
+- [x] Install Viper
+- [x] Struktur config pada `~/.config/prayer-times/config.json` (path mengikuti `os.UserConfigDir`)
+- [x] Simpan lokasi, metode, madhab, high-latitude rule, ihtiyati dan Imsak
+- [x] Baca config dengan fallback default Lhokseumawe jika belum ada
+- [x] Flags CLI menimpa config; `-set-config` menyimpan pilihan flag/config
+- [x] Tulis file config dengan permission owner-only (0600)
+- [x] Tes default, round-trip, path, permission
+- [x] Jalankan `go build ./...`, `go vet ./...`, `go test ./...` dan uji CLI simpan/muat config
+- [x] Commit: "Fase 4: User configuration dengan Viper"
 
-**Status**: Belum Dimulai
+**Status**: ✅ Selesai (commit menyusul dicatat setelah pembuatan).
 
 ---
 

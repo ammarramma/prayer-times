@@ -14,23 +14,65 @@ import (
 )
 
 func main() {
-	cfg := config.Default()
-	name := flag.String("name", cfg.Location.Name, "nama kota/lokasi")
-	latitude := flag.Float64("lat", cfg.Location.Latitude, "lintang desimal")
-	longitude := flag.Float64("lon", cfg.Location.Longitude, "bujur desimal")
-	timezone := flag.String("tz", cfg.Location.Timezone, "zona waktu IANA")
-	method := flag.String("method", string(cfg.Options.Method), "metode (kemenag, mwl, umm_al_qura, egyptian, karachi, isna, singapore, dubai, moonsighting_committee, kuwait, qatar, uoif)")
-	madhab := flag.String("madhab", string(cfg.Options.Madhab), "madhab Asr (shafii atau hanafi)")
-	highLatitude := flag.String("high-latitude", string(cfg.Options.HighLatitudeRule), "aturan lintang tinggi (middle_of_the_night, seventh_of_the_night, twilight_angle)")
-	ihtiyati := flag.Int("ihtiyati", cfg.Options.IhtiyatiMinutes, "koreksi ihtiyati dalam menit (khusus Kemenag)")
-	includeImsak := flag.Bool("imsak", cfg.Options.IncludeImsak, "tampilkan imsak (10 menit sebelum Subuh)")
+	configPathDefault, err := config.DefaultPath()
+	if err != nil {
+		fail("path konfigurasi", err)
+	}
+	configPath := flag.String("config", configPathDefault, "path file config JSON")
+	name := flag.String("name", "", "nama kota/lokasi")
+	latitude := flag.Float64("lat", 0, "lintang desimal")
+	longitude := flag.Float64("lon", 0, "bujur desimal")
+	timezone := flag.String("tz", "", "zona waktu IANA")
+	method := flag.String("method", "", "metode (kemenag, mwl, umm_al_qura, egyptian, karachi, isna, singapore, dubai, moonsighting_committee, kuwait, qatar, uoif)")
+	madhab := flag.String("madhab", "", "madhab Asr (shafii atau hanafi)")
+	highLatitude := flag.String("high-latitude", "", "aturan lintang tinggi (middle_of_the_night, seventh_of_the_night, twilight_angle)")
+	ihtiyati := flag.Int("ihtiyati", -1, "koreksi ihtiyati dalam menit (khusus Kemenag)")
+	includeImsak := flag.Bool("imsak", false, "tampilkan imsak (10 menit sebelum Subuh)")
 	dateFlag := flag.String("date", "", "tanggal Gregorian YYYY-MM-DD (default hari ini di zona lokasi)")
+	setConfig := flag.Bool("set-config", false, "simpan nilai flag lokasi/metode ke config, tanpa menjalankan TUI")
 	flag.Parse()
 
-	cfg.Location.Name, cfg.Location.Latitude, cfg.Location.Longitude, cfg.Location.Timezone = *name, *latitude, *longitude, *timezone
-	cfg.Options.Method, cfg.Options.Madhab = prayer.Method(*method), prayer.Madhab(*madhab)
-	cfg.Options.HighLatitudeRule, cfg.Options.IhtiyatiMinutes = prayer.HighLatitudeRule(*highLatitude), *ihtiyati
-	cfg.Options.IncludeImsak = *includeImsak
+	cfg, err := config.Load(*configPath)
+	if err != nil {
+		fail("config", err)
+	}
+	if *name != "" {
+		cfg.Location.Name = *name
+	}
+	if flagWasSet("lat") {
+		cfg.Location.Latitude = *latitude
+	}
+	if flagWasSet("lon") {
+		cfg.Location.Longitude = *longitude
+	}
+	if *timezone != "" {
+		cfg.Location.Timezone = *timezone
+	}
+	if *method != "" {
+		cfg.Options.Method = prayer.Method(*method)
+		if !flagWasSet("ihtiyati") {
+			cfg.Options.IhtiyatiMinutes = prayer.DefaultOptions(cfg.Options.Method).IhtiyatiMinutes
+		}
+	}
+	if *madhab != "" {
+		cfg.Options.Madhab = prayer.Madhab(*madhab)
+	}
+	if *highLatitude != "" {
+		cfg.Options.HighLatitudeRule = prayer.HighLatitudeRule(*highLatitude)
+	}
+	if *ihtiyati >= 0 {
+		cfg.Options.IhtiyatiMinutes = *ihtiyati
+	}
+	if flagWasSet("imsak") {
+		cfg.Options.IncludeImsak = *includeImsak
+	}
+	if *setConfig {
+		if err := config.Save(*configPath, cfg); err != nil {
+			fail("menyimpan config", err)
+		}
+		fmt.Printf("Konfigurasi tersimpan: %s\n", *configPath)
+		return
+	}
 	location, err := time.LoadLocation(cfg.Location.Timezone)
 	if err != nil {
 		fail("zona waktu", err)
@@ -54,6 +96,16 @@ func main() {
 	if _, err := program.Run(); err != nil {
 		fail("TUI", err)
 	}
+}
+
+func flagWasSet(name string) bool {
+	set := false
+	flag.Visit(func(current *flag.Flag) {
+		if current.Name == name {
+			set = true
+		}
+	})
+	return set
 }
 
 func printSchedule(location prayer.Location, date time.Time, times prayer.PrayerTimes) {
