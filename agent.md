@@ -1,7 +1,7 @@
 # Agent Context - Prayer Times TUI
 
 ## Tentang Proyek
-Aplikasi TUI (Text User Interface) untuk menampilkan jadwal waktu shalat yang akurat sesuai standar Kemenag Indonesia. Proyek ini akan dirilis ke AUR (Arch User Repository) untuk pengguna Arch Linux dan turunannya.
+Aplikasi jadwal waktu shalat worldwide yang mendukung kota mana pun dengan koordinat dan timezone IANA. Kemenag RI tersedia sebagai salah satu metode kalkulasi dan menjadi metode default yang menjaga akurasi untuk Indonesia. Proyek ini direncanakan dirilis ke AUR (Arch User Repository).
 
 ## Tech Stack
 - **Bahasa**: Go
@@ -10,11 +10,14 @@ Aplikasi TUI (Text User Interface) untuk menampilkan jadwal waktu shalat yang ak
 - **Config Management**: Viper
 - **Target Platform**: Linux (khususnya Arch Linux via AUR)
 
-## Lokasi Referensi
-- **Lokasi Default**: Lhokseumawe
-  - Latitude: 5.1801
-  - Longitude: 97.1406
-- **Standar Akurasi**: Kemenag Indonesia
+## Lokasi dan Kalkulasi
+- **Lokasi Default**: Lhokseumawe, Aceh (5.1801, 97.1406; `Asia/Jakarta`); nama, koordinat, dan timezone lain diberikan melalui config/flag.
+- `internal/prayer.Location` memakai timezone IANA, bukan timezone mesin.
+- **Metode**: Kemenag (Fajr 20°, Isha 18°, default), MWL, Umm al-Qura, Egyptian, Karachi, ISNA, Singapore, Dubai, Moonsighting Committee, Kuwait, Qatar, UOIF.
+- **Ihtiyati Kemenag**: default +2 menit untuk Subuh, Dzuhur, Ashar, Maghrib, Isya; Terbit dikurangi 2 menit. Imsak opsional adalah Subuh −10 menit. Metode lain tidak mendapat koreksi ihtiyati aplikasi.
+- Pembulatan waktu keluaran: detik/nanodetik lebih dari nol selalu dibulatkan naik ke menit berikutnya.
+- Madhab Asr: Shafii (default) atau Hanafi. Aturan lintang tinggi: Middle of the Night (default), Seventh of the Night, atau Twilight Angle.
+- Label presentasi berada di `internal/i18n` agar mendukung lokalisasi.
 
 ## Arsitektur
 ```
@@ -42,3 +45,7 @@ prayer-times/
 - Saat fase 1, jangan sentuh UI sama sekali - fokus pada akurasi kalkulasi
 - Model lemah bisa refer ke file ini untuk context proyek
 - Setiap fase harus verified working sebelum lanjut
+- Core domain murni berada di `internal/prayer`; wiring entry point tetap tipis.
+- Fixture akurasi Indonesia harus memakai jadwal Kemenag yang dapat direproduksi dan mencatat sumber/toleransi di `langkah.md`. Metode non-Kemenag tidak diberi ihtiyati aplikasi.
+- Core domain murni berada di `internal/prayer`; wiring entry point tetap tipis.
+- Fixture akurasi Indonesia harus memakai jadwal Kemenag yang dapat direproduksi dan mencatat sumber/toleransi di `langkah.md`. Metode non-Kemenag tidak diberi ihtiyati aplikasi.

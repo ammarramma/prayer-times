@@ -1,64 +1,79 @@
 package main
 
 import (
+	"flag"
 	"fmt"
+	"os"
 	"time"
 
-	"github.com/mnadev/adhango/pkg/calc"
-	"github.com/mnadev/adhango/pkg/data"
-	"github.com/mnadev/adhango/pkg/util"
-)
-
-const (
-	// Koordinat Lhokseumawe, Aceh
-	LATITUDE  = 5.1801
-	LONGITUDE = 97.1406
+	"github.com/ammarramma/prayer-times/internal/config"
+	"github.com/ammarramma/prayer-times/internal/i18n"
+	"github.com/ammarramma/prayer-times/internal/prayer"
 )
 
 func main() {
-	// Setup koordinat Lhokseumawe
-	coords, err := util.NewCoordinates(LATITUDE, LONGITUDE)
+	cfg := config.Default()
+	name := flag.String("name", cfg.Location.Name, "nama kota/lokasi")
+	latitude := flag.Float64("lat", cfg.Location.Latitude, "lintang desimal")
+	longitude := flag.Float64("lon", cfg.Location.Longitude, "bujur desimal")
+	timezone := flag.String("tz", cfg.Location.Timezone, "zona waktu IANA")
+	method := flag.String("method", string(cfg.Options.Method), "metode (kemenag, mwl, umm_al_qura, egyptian, karachi, isna, singapore, dubai, moonsighting_committee, kuwait, qatar, uoif)")
+	madhab := flag.String("madhab", string(cfg.Options.Madhab), "madhab Asr (shafii atau hanafi)")
+	highLatitude := flag.String("high-latitude", string(cfg.Options.HighLatitudeRule), "aturan lintang tinggi (middle_of_the_night, seventh_of_the_night, twilight_angle)")
+	ihtiyati := flag.Int("ihtiyati", cfg.Options.IhtiyatiMinutes, "koreksi ihtiyati dalam menit (khusus Kemenag)")
+	includeImsak := flag.Bool("imsak", cfg.Options.IncludeImsak, "tampilkan imsak (10 menit sebelum Subuh)")
+	dateFlag := flag.String("date", "", "tanggal Gregorian YYYY-MM-DD (default hari ini di zona lokasi)")
+	flag.Parse()
+
+	cfg.Location.Name, cfg.Location.Latitude, cfg.Location.Longitude, cfg.Location.Timezone = *name, *latitude, *longitude, *timezone
+	cfg.Options.Method, cfg.Options.Madhab = prayer.Method(*method), prayer.Madhab(*madhab)
+	cfg.Options.HighLatitudeRule, cfg.Options.IhtiyatiMinutes = prayer.HighLatitudeRule(*highLatitude), *ihtiyati
+	cfg.Options.IncludeImsak = *includeImsak
+	location, err := time.LoadLocation(cfg.Location.Timezone)
 	if err != nil {
-		fmt.Printf("Error creating coordinates: %v\n", err)
-		return
+		fail("zona waktu", err)
 	}
-
-	// Setup tanggal hari ini
-	today := time.Now()
-	// WIB timezone (UTC+7)
-	loc, _ := time.LoadLocation("Asia/Jakarta")
-	todayWIB := today.In(loc)
-	dateComponents := data.NewDateComponents(todayWIB)
-
-	// Setup calculation parameters untuk Kemenag Indonesia
-	// Kemenag: Fajr 20°, Isha 18°, Madhab Shafii
-	params := calc.NewCalculationParametersBuilder().
-		SetFajrAngle(20.0).
-		SetIshaAngle(18.0).
-		SetMadhab(calc.SHAFI_HANBALI_MALIKI).
-		Build()
-
-	// Kalkulasi waktu shalat
-	prayerTimes, err := calc.NewPrayerTimes(coords, dateComponents, params)
+	date := time.Now().In(location)
+	if *dateFlag != "" {
+		date, err = time.ParseInLocation("2006-01-02", *dateFlag, location)
+		if err != nil {
+			fail("tanggal", err)
+		}
+	}
+	times, err := prayer.Calculate(cfg.Location, date, cfg.Options)
 	if err != nil {
-		fmt.Printf("Error calculating prayer times: %v\n", err)
-		return
+		fail("kalkulasi", err)
 	}
+	printSchedule(cfg.Location, date, times)
+}
 
-	// Print hasil
+func printSchedule(location prayer.Location, date time.Time, times prayer.PrayerTimes) {
 	fmt.Println("===========================================")
-	fmt.Println("      JADWAL WAKTU SHALAT")
-	fmt.Println("      Lhokseumawe, Aceh")
-	fmt.Printf("      %s\n", todayWIB.Format("Monday, 02 January 2006"))
+	fmt.Printf("      %s\n", i18n.Title)
+	fmt.Printf("      %s (%s)\n", location.Name, location.Timezone)
+	fmt.Printf("      %s\n", i18n.FormatDate(date))
 	fmt.Println("===========================================")
-	fmt.Printf("Subuh  : %s\n", prayerTimes.Fajr.In(loc).Format("15:04"))
-	fmt.Printf("Terbit : %s\n", prayerTimes.Sunrise.In(loc).Format("15:04"))
-	fmt.Printf("Dzuhur : %s\n", prayerTimes.Dhuhr.In(loc).Format("15:04"))
-	fmt.Printf("Ashar  : %s\n", prayerTimes.Asr.In(loc).Format("15:04"))
-	fmt.Printf("Maghrib: %s\n", prayerTimes.Maghrib.In(loc).Format("15:04"))
-	fmt.Printf("Isya   : %s\n", prayerTimes.Isha.In(loc).Format("15:04"))
+	if !times.Imsak.IsZero() {
+		fmt.Printf("%-8s: %s\n", i18n.Imsak, times.Imsak.Format("15:04"))
+	}
+	fmt.Printf("%-8s: %s\n", i18n.Fajr, times.Fajr.Format("15:04"))
+	fmt.Printf("%-8s: %s\n", i18n.Sunrise, times.Sunrise.Format("15:04"))
+	fmt.Printf("%-8s: %s\n", i18n.Dhuhr, times.Dhuhr.Format("15:04"))
+	fmt.Printf("%-8s: %s\n", i18n.Asr, times.Asr.Format("15:04"))
+	fmt.Printf("%-8s: %s\n", i18n.Maghrib, times.Maghrib.Format("15:04"))
+	fmt.Printf("%-8s: %s\n", i18n.Isha, times.Isha.Format("15:04"))
 	fmt.Println("===========================================")
-	fmt.Println("Metode: Kemenag RI (Fajr 20°, Isha 18°)")
-	fmt.Println("Madhab Asr: Shafii")
+	fmt.Printf("%s: %s\n", i18n.Method, i18n.MethodName(string(times.Method)))
+	fmt.Printf("%s: %s\n", i18n.Madhab, i18n.MadhabName(string(times.Madhab)))
+	status := i18n.Disabled
+	if times.Ihtiyati {
+		status = fmt.Sprintf("%s (%d %s)", i18n.Enabled, times.IhtiyatiMinutes, i18n.MinutesSuffix)
+	}
+	fmt.Printf("%s: %s\n", i18n.Ihtiyati, status)
 	fmt.Println("===========================================")
+}
+
+func fail(context string, err error) {
+	fmt.Fprintf(os.Stderr, "Kesalahan %s: %v\n", context, err)
+	os.Exit(2)
 }
