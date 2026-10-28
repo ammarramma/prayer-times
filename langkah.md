@@ -30,23 +30,20 @@
 
 ---
 
-## Fase 2: Interaktivitas & State (Bubble Tea) 🔵
-**Tujuan**: Implementasi arsitektur ELM dan navigasi hari
+## Fase 2: Interaktivitas & State (Bubble Tea) 🟡
+**Tujuan**: Implementasi arsitektur ELM dan navigasi hari dengan konfigurasi lokasi/metode yang sama dari core.
 
 ### Checklist
-- [ ] Install Bubble Tea (`go get github.com/charmbracelet/bubbletea`)
-- [ ] Buat struktur Model
-  - [ ] Field untuk menyimpan jadwal hari ini
-  - [ ] Field untuk tracking tanggal yang ditampilkan
-- [ ] Implementasi fungsi Init()
-- [ ] Implementasi fungsi Update()
-  - [ ] Handle key press (Arrow Left: kemarin, Arrow Right: besok)
-  - [ ] Handle quit (q, Ctrl+C)
-- [ ] Implementasi fungsi View() (render sederhana dulu)
-- [ ] Test navigasi maju-mundur hari
-- [ ] Commit: "Fase 2: Bubble Tea & navigasi hari"
+- [x] Tambahkan Bubble Tea
+- [x] Buat model yang menyimpan jadwal, tanggal, lokasi, dan opsi
+- [x] Implementasi Init(), Update(), View()
+- [x] Handle panah kiri/kanan untuk hari sebelumnya/berikutnya
+- [x] Handle q dan Ctrl+C
+- [x] Uji transisi navigasi dan quit
+- [x] Verifikasi `go build ./...`, `go vet ./...`, `go test ./...`
+- [x] Commit: "Fase 2: Bubble Tea & navigasi hari"
 
-**Status**: Belum Dimulai
+**Status**: ✅ Selesai (commit menyusul dicatat setelah pembuatan).
 
 ---
 

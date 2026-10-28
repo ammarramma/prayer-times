@@ -47,5 +47,3 @@ prayer-times/
 - Setiap fase harus verified working sebelum lanjut
 - Core domain murni berada di `internal/prayer`; wiring entry point tetap tipis.
 - Fixture akurasi Indonesia harus memakai jadwal Kemenag yang dapat direproduksi dan mencatat sumber/toleransi di `langkah.md`. Metode non-Kemenag tidak diberi ihtiyati aplikasi.
-- Core domain murni berada di `internal/prayer`; wiring entry point tetap tipis.
-- Fixture akurasi Indonesia harus memakai jadwal Kemenag yang dapat direproduksi dan mencatat sumber/toleransi di `langkah.md`. Metode non-Kemenag tidak diberi ihtiyati aplikasi.

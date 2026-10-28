@@ -9,6 +9,8 @@ import (
 	"github.com/ammarramma/prayer-times/internal/config"
 	"github.com/ammarramma/prayer-times/internal/i18n"
 	"github.com/ammarramma/prayer-times/internal/prayer"
+	"github.com/ammarramma/prayer-times/internal/tui"
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 func main() {
@@ -40,11 +42,18 @@ func main() {
 			fail("tanggal", err)
 		}
 	}
-	times, err := prayer.Calculate(cfg.Location, date, cfg.Options)
-	if err != nil {
-		fail("kalkulasi", err)
+	if *dateFlag != "" {
+		times, err := prayer.Calculate(cfg.Location, date, cfg.Options)
+		if err != nil {
+			fail("kalkulasi", err)
+		}
+		printSchedule(cfg.Location, date, times)
+		return
 	}
-	printSchedule(cfg.Location, date, times)
+	program := tea.NewProgram(tui.New(cfg.Location, cfg.Options, date))
+	if _, err := program.Run(); err != nil {
+		fail("TUI", err)
+	}
 }
 
 func printSchedule(location prayer.Location, date time.Time, times prayer.PrayerTimes) {

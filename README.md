@@ -2,9 +2,7 @@
 
 Aplikasi waktu shalat berbasis Go yang mendukung kota di seluruh dunia melalui koordinat dan timezone IANA. Kemenag RI tetap menjadi metode default, dengan koreksi ihtiyati untuk mempertahankan konvensi waktu Indonesia.
 
-## Status
-
-Fase 1 (core worldwide dan kalkulasi) sedang direvisi; fase interaktivitas TUI menyusul. Lihat [langkah.md](./langkah.md) untuk status detail.
+##Core worldwide dan kalkulasi selesai. Aplikasi membuka TUI Bubble Tea untuk navigasi tanggal; opsi `-date` tetap menghasilkan satu jadwal non-interaktif. Lihat [langkah.md](./langkah.md) untuk status detail.
 
 ## Fitur kalkulasi
 
@@ -21,6 +19,8 @@ Fase 1 (core worldwide dan kalkulasi) sedang direvisi; fase interaktivitas TUI m
 ```bash
 go run .
 ```
+
+Di TUI gunakan panah kiri/kanan untuk memilih hari sebelumnya/berikutnya dan `q` atau Ctrl+C untuk keluar. Lokasi, metode, madhab, aturan lintang, ihtiyati, dan tanggal dapat diberikan lewat flag yang sama seperti contoh di bawah; seluruh opsi tetap memakai kalkulasi core yang sama.
 
 Flag opsional:
 
