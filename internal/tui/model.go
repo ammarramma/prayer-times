@@ -26,6 +26,7 @@ type Model struct {
 	err        error
 	quit       bool
 	styles     styles
+	Locale     i18n.Locale
 }
 
 func New(location prayer.Location, options prayer.Options, date time.Time) Model {
@@ -33,7 +34,8 @@ func New(location prayer.Location, options prayer.Options, date time.Time) Model
 	if err == nil {
 		date = date.In(tz)
 	}
-	m := Model{Location: location, Options: options, Date: date, now: time.Now(), Width: 100, styles: defaultStyles()}
+	locale, _ := i18n.For("en")
+	m := Model{Location: location, Options: options, Date: date, now: time.Now(), Width: 100, styles: defaultStyles(), Locale: locale}
 	m.recalculate()
 	return m
 }
@@ -76,12 +78,12 @@ func (m Model) View() string {
 		return ""
 	}
 	if m.err != nil {
-		return m.styles.error.Render(fmt.Sprintf("Kesalahan kalkulasi: %v", m.err))
+		return m.styles.error.Render(fmt.Sprintf("%s: %v", m.Locale.CalculationError, m.err))
 	}
 	var view strings.Builder
-	fmt.Fprintln(&view, m.styles.title.Render(i18n.Title))
+	fmt.Fprintln(&view, m.styles.title.Render(m.Locale.Title))
 	fmt.Fprintf(&view, "%s  ·  %s\n", m.Location.Name, m.Location.Timezone)
-	fmt.Fprintln(&view, m.styles.date.Render(i18n.FormatDate(m.Date)))
+	fmt.Fprintln(&view, m.styles.date.Render(m.Locale.FormatDate(m.Date)))
 	fmt.Fprintln(&view)
 
 	isToday := displayedDateIsToday(m.Date, m.now, m.Location.Timezone)
@@ -98,11 +100,11 @@ func (m Model) View() string {
 		name string
 		time time.Time
 	}{
-		{prayer.Fajr, i18n.Fajr, m.times.Fajr},
-		{prayer.Dhuhr, i18n.Dhuhr, m.times.Dhuhr},
-		{prayer.Asr, i18n.Asr, m.times.Asr},
-		{prayer.Maghrib, i18n.Maghrib, m.times.Maghrib},
-		{prayer.Isha, i18n.Isha, m.times.Isha},
+		{prayer.Fajr, m.Locale.Fajr, m.times.Fajr},
+		{prayer.Dhuhr, m.Locale.Dhuhr, m.times.Dhuhr},
+		{prayer.Asr, m.Locale.Asr, m.times.Asr},
+		{prayer.Maghrib, m.Locale.Maghrib, m.times.Maghrib},
+		{prayer.Isha, m.Locale.Isha, m.times.Isha},
 	}
 	boxes := make([]string, 0, len(prayers))
 	for _, current := range prayers {
@@ -125,26 +127,26 @@ func (m Model) View() string {
 	}
 	if isToday {
 		if status.Now != nil {
-			fmt.Fprintf(&view, "NOW: %s · started %d min ago\n", displayPrayerName(status.Now.Name), int(m.now.Sub(status.Now.Time)/time.Minute))
+			fmt.Fprintf(&view, "%s: %s · %s %d %s ago\n", m.Locale.NowPrefix, displayPrayerName(m.Locale, status.Now.Name), m.Locale.StartedSuffix, int(m.now.Sub(status.Now.Time)/time.Minute), m.Locale.MinutesSuffix)
 		}
-		label := "NEXT: " + displayPrayerName(status.Next.Name)
+		label := m.Locale.NextPrefix + ": " + displayPrayerName(m.Locale, status.Next.Name)
 		if status.Next.Tomorrow {
-			label += " (tomorrow)"
+			label += " (" + m.Locale.Tomorrow + ")"
 		}
-		fmt.Fprintf(&view, "%s · in %s\n", label, countdown(m.now, status.Next.Time))
+		fmt.Fprintf(&view, "%s · %s %s\n", label, m.Locale.InPrefix, countdown(m.now, status.Next.Time))
 	}
-	fmt.Fprintf(&view, "%s  %s\n", i18n.Sunrise, m.times.Sunrise.Format("15:04"))
+	fmt.Fprintf(&view, "%s  %s\n", m.Locale.Sunrise, m.times.Sunrise.Format("15:04"))
 	if !m.times.Imsak.IsZero() {
-		fmt.Fprintf(&view, "%s  %s\n", i18n.Imsak, m.times.Imsak.Format("15:04"))
+		fmt.Fprintf(&view, "%s  %s\n", m.Locale.Imsak, m.times.Imsak.Format("15:04"))
 	}
 	fmt.Fprintln(&view)
-	metadata := fmt.Sprintf("%s: %s  ·  %s: %s  ·  %s: %s", i18n.Method, i18n.MethodName(string(m.times.Method)), i18n.Madhab, i18n.MadhabName(string(m.times.Madhab)), i18n.Ihtiyati, ihtiyatiLabel(m.times))
+	metadata := fmt.Sprintf("%s: %s  ·  %s: %s  ·  %s: %s", m.Locale.Method, m.Locale.MethodName(string(m.times.Method)), m.Locale.Madhab, m.Locale.MadhabName(string(m.times.Madhab)), m.Locale.Ihtiyati, ihtiyatiLabel(m.Locale, m.times))
 	metadataWidth := m.Width
 	if metadataWidth < 1 {
 		metadataWidth = 1
 	}
 	fmt.Fprintln(&view, lipgloss.NewStyle().MaxWidth(metadataWidth).Render(metadata))
-	fmt.Fprintln(&view, m.styles.footer.MaxWidth(metadataWidth).Render("←/→: ubah hari   t: hari ini   q/Ctrl+C: keluar"))
+	fmt.Fprintln(&view, m.styles.footer.MaxWidth(metadataWidth).Render(m.Locale.Footer))
 	content := view.String()
 	if m.Fullscreen {
 		return lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Center, content)
@@ -171,18 +173,18 @@ func displayedDateIsToday(date, now time.Time, timezone string) bool {
 	return date.In(location).Format("2006-01-02") == now.In(location).Format("2006-01-02")
 }
 
-func displayPrayerName(name prayer.PrayerName) string {
+func displayPrayerName(locale i18n.Locale, name prayer.PrayerName) string {
 	switch name {
 	case prayer.Fajr:
-		return i18n.Fajr
+		return locale.Fajr
 	case prayer.Dhuhr:
-		return i18n.Dhuhr
+		return locale.Dhuhr
 	case prayer.Asr:
-		return i18n.Asr
+		return locale.Asr
 	case prayer.Maghrib:
-		return i18n.Maghrib
+		return locale.Maghrib
 	case prayer.Isha:
-		return i18n.Isha
+		return locale.Isha
 	default:
 		return string(name)
 	}
@@ -196,9 +198,9 @@ func countdown(now, target time.Time) string {
 	return fmt.Sprintf("%02d:%02d:%02d", hours, minutes, seconds)
 }
 
-func ihtiyatiLabel(times prayer.PrayerTimes) string {
+func ihtiyatiLabel(locale i18n.Locale, times prayer.PrayerTimes) string {
 	if !times.Ihtiyati {
-		return i18n.Disabled
+		return locale.Disabled
 	}
-	return fmt.Sprintf("%s (%d %s)", i18n.Enabled, times.IhtiyatiMinutes, i18n.MinutesSuffix)
+	return fmt.Sprintf("%s (+%d %s)", locale.Enabled, times.IhtiyatiMinutes, locale.MinutesSuffix)
 }

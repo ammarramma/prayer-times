@@ -18,23 +18,28 @@ var version = "dev"
 func main() {
 	configPathDefault, err := config.DefaultPath()
 	if err != nil {
-		fail("path konfigurasi", err)
+		fail("configuration path", err)
 	}
-	configPath := flag.String("config", configPathDefault, "path file config JSON")
-	name := flag.String("name", "", "nama kota/lokasi")
-	latitude := flag.Float64("lat", 0, "lintang desimal")
-	longitude := flag.Float64("lon", 0, "bujur desimal")
-	timezone := flag.String("tz", "", "zona waktu IANA")
-	method := flag.String("method", "", "metode (kemenag, mwl, umm_al_qura, egyptian, karachi, isna, singapore, dubai, moonsighting_committee, kuwait, qatar, uoif)")
-	madhab := flag.String("madhab", "", "madhab Asr (shafii atau hanafi)")
-	highLatitude := flag.String("high-latitude", "", "aturan lintang tinggi (middle_of_the_night, seventh_of_the_night, twilight_angle)")
-	ihtiyati := flag.Int("ihtiyati", -1, "koreksi ihtiyati dalam menit (khusus Kemenag)")
-	includeImsak := flag.Bool("imsak", false, "tampilkan imsak (10 menit sebelum Subuh)")
-	fullscreen := flag.Bool("fullscreen", false, "jalankan TUI pada layar penuh (alt screen)")
-	dateFlag := flag.String("date", "", "tanggal Gregorian YYYY-MM-DD (default hari ini di zona lokasi)")
-	setConfig := flag.Bool("set-config", false, "simpan nilai flag lokasi/metode ke config, tanpa menjalankan TUI")
-	showVersion := flag.Bool("version", false, "tampilkan versi aplikasi")
+	configPath := flag.String("config", configPathDefault, "JSON config file path")
+	name := flag.String("name", "", "city/location name")
+	latitude := flag.Float64("lat", 0, "decimal latitude")
+	longitude := flag.Float64("lon", 0, "decimal longitude")
+	timezone := flag.String("tz", "", "IANA time zone")
+	method := flag.String("method", "", "calculation method (kemenag, mwl, umm_al_qura, egyptian, karachi, isna, singapore, dubai, moonsighting_committee, kuwait, qatar, uoif)")
+	madhab := flag.String("madhab", "", "Asr school (shafii or hanafi)")
+	highLatitude := flag.String("high-latitude", "", "high-latitude rule (middle_of_the_night, seventh_of_the_night, twilight_angle)")
+	ihtiyati := flag.Int("ihtiyati", -1, "Kemenag safety margin in minutes")
+	includeImsak := flag.Bool("imsak", false, "show Imsak (10 minutes before Fajr)")
+	fullscreen := flag.Bool("fullscreen", false, "run TUI in full screen (alternate screen)")
+	dateFlag := flag.String("date", "", "Gregorian date YYYY-MM-DD (default: today at location)")
+	setConfig := flag.Bool("set-config", false, "save location/method options to config and exit")
+	language := flag.String("lang", "", "language: en or id")
+	showVersion := flag.Bool("version", false, "show application version")
 	flag.Parse()
+	if flag.NArg() > 0 {
+		fmt.Fprintf(os.Stderr, "Error: unexpected positional argument(s): %v\n", flag.Args())
+		os.Exit(2)
+	}
 	if *showVersion {
 		fmt.Println(version)
 		return
@@ -43,6 +48,13 @@ func main() {
 	cfg, err := config.Load(*configPath)
 	if err != nil {
 		fail("config", err)
+	}
+	if *language != "" {
+		cfg.Language = *language
+	}
+	locale, err := i18n.For(cfg.Language)
+	if err != nil {
+		fail("language", err)
 	}
 	if *name != "" {
 		cfg.Location.Name = *name
@@ -76,31 +88,32 @@ func main() {
 	}
 	if *setConfig {
 		if err := config.Save(*configPath, cfg); err != nil {
-			fail("menyimpan config", err)
+			fail("saving config", err)
 		}
-		fmt.Printf("Konfigurasi tersimpan: %s\n", *configPath)
+		fmt.Printf("%s: %s\n", locale.ConfigSaved, *configPath)
 		return
 	}
 	location, err := time.LoadLocation(cfg.Location.Timezone)
 	if err != nil {
-		fail("zona waktu", err)
+		fail("timezone", err)
 	}
 	date := time.Now().In(location)
 	if *dateFlag != "" {
 		date, err = time.ParseInLocation("2006-01-02", *dateFlag, location)
 		if err != nil {
-			fail("tanggal", err)
+			fail("date", err)
 		}
 	}
 	if *dateFlag != "" {
 		times, err := prayer.Calculate(cfg.Location, date, cfg.Options)
 		if err != nil {
-			fail("kalkulasi", err)
+			fail("calculation", err)
 		}
-		printSchedule(cfg.Location, date, times)
+		printSchedule(locale, cfg.Location, date, times)
 		return
 	}
 	model := tui.New(cfg.Location, cfg.Options, date)
+	model.Locale = locale
 	model.Fullscreen = *fullscreen
 	programOptions := []tea.ProgramOption{}
 	if *fullscreen {
@@ -122,33 +135,33 @@ func flagWasSet(name string) bool {
 	return set
 }
 
-func printSchedule(location prayer.Location, date time.Time, times prayer.PrayerTimes) {
+func printSchedule(locale i18n.Locale, location prayer.Location, date time.Time, times prayer.PrayerTimes) {
 	fmt.Println("===========================================")
-	fmt.Printf("      %s\n", i18n.Title)
+	fmt.Printf("      %s\n", locale.Title)
 	fmt.Printf("      %s (%s)\n", location.Name, location.Timezone)
-	fmt.Printf("      %s\n", i18n.FormatDate(date))
+	fmt.Printf("      %s\n", locale.FormatDate(date))
 	fmt.Println("===========================================")
 	if !times.Imsak.IsZero() {
-		fmt.Printf("%-8s: %s\n", i18n.Imsak, times.Imsak.Format("15:04"))
+		fmt.Printf("%-8s: %s\n", locale.Imsak, times.Imsak.Format("15:04"))
 	}
-	fmt.Printf("%-8s: %s\n", i18n.Fajr, times.Fajr.Format("15:04"))
-	fmt.Printf("%-8s: %s\n", i18n.Sunrise, times.Sunrise.Format("15:04"))
-	fmt.Printf("%-8s: %s\n", i18n.Dhuhr, times.Dhuhr.Format("15:04"))
-	fmt.Printf("%-8s: %s\n", i18n.Asr, times.Asr.Format("15:04"))
-	fmt.Printf("%-8s: %s\n", i18n.Maghrib, times.Maghrib.Format("15:04"))
-	fmt.Printf("%-8s: %s\n", i18n.Isha, times.Isha.Format("15:04"))
+	fmt.Printf("%-8s: %s\n", locale.Fajr, times.Fajr.Format("15:04"))
+	fmt.Printf("%-8s: %s\n", locale.Sunrise, times.Sunrise.Format("15:04"))
+	fmt.Printf("%-8s: %s\n", locale.Dhuhr, times.Dhuhr.Format("15:04"))
+	fmt.Printf("%-8s: %s\n", locale.Asr, times.Asr.Format("15:04"))
+	fmt.Printf("%-8s: %s\n", locale.Maghrib, times.Maghrib.Format("15:04"))
+	fmt.Printf("%-8s: %s\n", locale.Isha, times.Isha.Format("15:04"))
 	fmt.Println("===========================================")
-	fmt.Printf("%s: %s\n", i18n.Method, i18n.MethodName(string(times.Method)))
-	fmt.Printf("%s: %s\n", i18n.Madhab, i18n.MadhabName(string(times.Madhab)))
-	status := i18n.Disabled
+	fmt.Printf("%s: %s\n", locale.Method, locale.MethodName(string(times.Method)))
+	fmt.Printf("%s: %s\n", locale.Madhab, locale.MadhabName(string(times.Madhab)))
+	status := locale.Disabled
 	if times.Ihtiyati {
-		status = fmt.Sprintf("%s (%d %s)", i18n.Enabled, times.IhtiyatiMinutes, i18n.MinutesSuffix)
+		status = fmt.Sprintf("%s (%d %s)", locale.Enabled, times.IhtiyatiMinutes, locale.MinutesSuffix)
 	}
-	fmt.Printf("%s: %s\n", i18n.Ihtiyati, status)
+	fmt.Printf("%s: %s\n", locale.Ihtiyati, status)
 	fmt.Println("===========================================")
 }
 
 func fail(context string, err error) {
-	fmt.Fprintf(os.Stderr, "Kesalahan %s: %v\n", context, err)
+	fmt.Fprintf(os.Stderr, "Error %s: %v\n", context, err)
 	os.Exit(2)
 }

@@ -13,6 +13,7 @@ import (
 type Config struct {
 	Location prayer.Location `json:"location" mapstructure:"location"`
 	Options  prayer.Options  `json:"options" mapstructure:"options"`
+	Language string          `json:"language" mapstructure:"language"`
 }
 
 // Default mengembalikan konfigurasi awal Kemenag di Lhokseumawe.
@@ -20,6 +21,7 @@ func Default() Config {
 	return Config{
 		Location: prayer.DefaultLocation(),
 		Options:  prayer.DefaultOptions(prayer.MethodKemenag),
+		Language: "en",
 	}
 }
 
@@ -61,6 +63,7 @@ func Save(path string, cfg Config) error {
 	v.SetConfigType("json")
 	v.Set("location", cfg.Location)
 	v.Set("options", cfg.Options)
+	v.Set("language", cfg.Language)
 	if err := v.WriteConfigAs(path); err != nil {
 		return fmt.Errorf("menulis config %s: %w", path, err)
 	}
@@ -77,6 +80,9 @@ func mergeDefaults(cfg *Config) {
 	}
 	if cfg.Location.Latitude == 0 && cfg.Location.Longitude == 0 {
 		cfg.Location.Latitude, cfg.Location.Longitude = defaults.Location.Latitude, defaults.Location.Longitude
+	}
+	if cfg.Language == "" {
+		cfg.Language = defaults.Language
 	}
 	if cfg.Options.Method == "" {
 		cfg.Options.Method = defaults.Options.Method

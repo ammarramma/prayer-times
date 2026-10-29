@@ -59,21 +59,21 @@ func TestLipglossViewShowsUpcomingAndCountdown(t *testing.T) {
 	model.now = time.Date(2026, time.October, 28, 4, 0, 0, 0, time.FixedZone("test", 7*60*60))
 	model.Width = 100
 	view := model.View()
-	for _, want := range []string{"JADWAL WAKTU SHALAT", "Lhokseumawe", "Subuh", "NEXT: Subuh · in 01:"} {
+	for _, want := range []string{"PRAYER TIMES", "Lhokseumawe", "Fajr", "NEXT: Fajr · in 01:"} {
 		if !strings.Contains(view, want) {
 			t.Errorf("View tidak memuat %q: %s", want, view)
 		}
 	}
 	model.Width = 40
-	if view = model.View(); !strings.Contains(view, "Isya") {
+	if view = model.View(); !strings.Contains(view, "Isha") {
 		t.Errorf("layout sempit tidak memuat shalat: %s", view)
 	}
-	if !strings.Contains(view, "Terbit") || strings.Contains(view, "Imsak") {
+	if !strings.Contains(view, "Sunrise") || strings.Contains(view, "Imsak") {
 		t.Errorf("Terbit harus tampil dan Imsak default harus tersembunyi: %s", view)
 	}
-	regularBox := model.styles.prayer.Render("Dzuhur\n12:00")
-	nextBox := model.styles.next.Render("Subuh\n05:00")
-	blueNextBox := model.styles.nextDuringNow.Render("Subuh\n05:00")
+	regularBox := model.styles.prayer.Render("Dhuhr\n12:00")
+	nextBox := model.styles.next.Render("Fajr\n05:00")
+	blueNextBox := model.styles.nextDuringNow.Render("Fajr\n05:00")
 	for label, box := range map[string]string{"green": nextBox, "blue": blueNextBox} {
 		if lipgloss.Width(regularBox) != lipgloss.Width(box) || lipgloss.Height(regularBox) != lipgloss.Height(box) {
 			t.Errorf("dimensi box reguler %dx%d berbeda dengan box %s %dx%d", lipgloss.Width(regularBox), lipgloss.Height(regularBox), label, lipgloss.Width(box), lipgloss.Height(box))
@@ -128,11 +128,11 @@ func TestNowAndNextPresentation(t *testing.T) {
 	model := New(location, options, date)
 	model.now = times.Maghrib.Add(6 * time.Minute)
 	view := model.View()
-	if !strings.Contains(view, "NOW: Maghrib · started 6 min ago") || !strings.Contains(view, "NEXT: Isya · in ") {
+	if !strings.Contains(view, "NOW: Maghrib · started 6 min ago") || !strings.Contains(view, "NEXT: Isha · in ") {
 		t.Fatalf("NOW/NEXT text missing: %s", view)
 	}
 	model.now = times.Isha.Add(16 * time.Minute)
-	if view = model.View(); !strings.Contains(view, "NEXT: Subuh (tomorrow) · in ") {
+	if view = model.View(); !strings.Contains(view, "NEXT: Fajr (tomorrow) · in ") {
 		t.Fatalf("tomorrow marker missing after Isha: %s", view)
 	}
 }
@@ -157,7 +157,7 @@ func TestFullscreenCentersContentAtWindowSize(t *testing.T) {
 	if model.Width != 100 || model.Height != 40 {
 		t.Fatalf("ukuran model = %dx%d, mau 100x40", model.Width, model.Height)
 	}
-	if view := model.View(); !strings.Contains(view, "JADWAL WAKTU SHALAT") || !strings.Contains(view, "←/→: ubah hari") {
+	if view := model.View(); !strings.Contains(view, "PRAYER TIMES") || !strings.Contains(view, "←/→: change day") {
 		t.Fatalf("konten fullscreen hilang: %s", view)
 	}
 	if lines := strings.Split(model.View(), "\n"); len(lines) != model.Height {

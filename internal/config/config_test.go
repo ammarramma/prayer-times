@@ -23,6 +23,7 @@ func TestSaveAndLoadRoundTrip(t *testing.T) {
 	want := Config{
 		Location: prayer.Location{Name: "London", Latitude: 51.5072, Longitude: -0.1276, Timezone: "Europe/London"},
 		Options:  prayer.Options{Method: prayer.MethodMWL, Madhab: prayer.MadhabHanafi, HighLatitudeRule: prayer.SeventhOfTheNight, IhtiyatiMinutes: 0, IncludeImsak: true},
+		Language: "en",
 	}
 	if err := Save(path, want); err != nil {
 		t.Fatal(err)
@@ -40,6 +41,20 @@ func TestSaveAndLoadRoundTrip(t *testing.T) {
 	}
 	if info.Mode().Perm() != 0o600 {
 		t.Errorf("permission config = %o, mau 600", info.Mode().Perm())
+	}
+}
+
+func TestLegacyConfigDefaultsLanguageToEnglish(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "legacy.json")
+	if err := os.WriteFile(path, []byte(`{"location":{"name":"London","latitude":51.5072,"longitude":-0.1276,"timezone":"Europe/London"},"options":{"method":"mwl"}}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := Load(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.Language != "en" || cfg.Options.Method != prayer.MethodMWL {
+		t.Fatalf("legacy config merged to %#v", cfg)
 	}
 }
 
