@@ -21,9 +21,10 @@ func TestLoadMissingConfigUsesDefaults(t *testing.T) {
 func TestSaveAndLoadRoundTrip(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "nested", "config.json")
 	want := Config{
-		Location: prayer.Location{Name: "London", Latitude: 51.5072, Longitude: -0.1276, Timezone: "Europe/London"},
-		Options:  prayer.Options{Method: prayer.MethodMWL, Madhab: prayer.MadhabHanafi, HighLatitudeRule: prayer.SeventhOfTheNight, IhtiyatiMinutes: 0, IncludeImsak: true},
-		Language: "en",
+		Location:       prayer.Location{Name: "London", Latitude: 51.5072, Longitude: -0.1276, Timezone: "Europe/London"},
+		Options:        prayer.Options{Method: prayer.MethodMWL, Madhab: prayer.MadhabHanafi, HighLatitudeRule: prayer.SeventhOfTheNight, IhtiyatiMinutes: 0, IncludeImsak: true},
+		Language:       "en",
+		MethodExplicit: true,
 	}
 	if err := Save(path, want); err != nil {
 		t.Fatal(err)
@@ -44,7 +45,7 @@ func TestSaveAndLoadRoundTrip(t *testing.T) {
 	}
 }
 
-func TestLegacyConfigDefaultsLanguageToEnglish(t *testing.T) {
+func TestLegacyConfigWithoutLanguageAndOffsetsLoads(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "legacy.json")
 	if err := os.WriteFile(path, []byte(`{"location":{"name":"London","latitude":51.5072,"longitude":-0.1276,"timezone":"Europe/London"},"options":{"method":"mwl"}}`), 0o600); err != nil {
 		t.Fatal(err)
@@ -53,7 +54,7 @@ func TestLegacyConfigDefaultsLanguageToEnglish(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if cfg.Language != "en" || cfg.Options.Method != prayer.MethodMWL {
+	if cfg.Language != "en" || cfg.Options.Method != prayer.MethodMWL || cfg.Options.Offsets != (prayer.PrayerOffsets{}) {
 		t.Fatalf("legacy config merged to %#v", cfg)
 	}
 }

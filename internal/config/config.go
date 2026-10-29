@@ -11,9 +11,10 @@ import (
 
 // Config menyimpan lokasi serta opsi kalkulasi aplikasi.
 type Config struct {
-	Location prayer.Location `json:"location" mapstructure:"location"`
-	Options  prayer.Options  `json:"options" mapstructure:"options"`
-	Language string          `json:"language" mapstructure:"language"`
+	Location       prayer.Location `json:"location" mapstructure:"location"`
+	Options        prayer.Options  `json:"options" mapstructure:"options"`
+	Language       string          `json:"language" mapstructure:"language"`
+	MethodExplicit bool            `json:"-" mapstructure:"-"`
 }
 
 // Default mengembalikan konfigurasi awal Kemenag di Lhokseumawe.
@@ -49,6 +50,7 @@ func Load(path string) (Config, error) {
 	if err := v.Unmarshal(&cfg); err != nil {
 		return Config{}, fmt.Errorf("mem-parsing config %s: %w", path, err)
 	}
+	cfg.MethodExplicit = v.IsSet("options.method")
 	mergeDefaults(&cfg)
 	return cfg, nil
 }
@@ -84,8 +86,10 @@ func mergeDefaults(cfg *Config) {
 	if cfg.Language == "" {
 		cfg.Language = defaults.Language
 	}
+
 	if cfg.Options.Method == "" {
-		cfg.Options.Method = defaults.Options.Method
+		cfg.Options.Method = prayer.DefaultMethod(cfg.Location.Timezone)
+		cfg.Options.IhtiyatiMinutes = prayer.DefaultOptions(cfg.Options.Method).IhtiyatiMinutes
 	}
 	if cfg.Options.Madhab == "" {
 		cfg.Options.Madhab = defaults.Options.Madhab

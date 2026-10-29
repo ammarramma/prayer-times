@@ -49,6 +49,7 @@ func main() {
 	if err != nil {
 		fail("config", err)
 	}
+	methodExplicit := cfg.MethodExplicit || flagWasSet("method")
 	if *language != "" {
 		cfg.Language = *language
 	}
@@ -74,6 +75,11 @@ func main() {
 			cfg.Options.IhtiyatiMinutes = prayer.DefaultOptions(cfg.Options.Method).IhtiyatiMinutes
 		}
 	}
+	if !methodExplicit {
+		cfg.Options.Method = prayer.DefaultMethod(cfg.Location.Timezone)
+		cfg.Options.IhtiyatiMinutes = prayer.DefaultOptions(cfg.Options.Method).IhtiyatiMinutes
+	}
+	cfg.MethodExplicit = false
 	if *madhab != "" {
 		cfg.Options.Madhab = prayer.Madhab(*madhab)
 	}

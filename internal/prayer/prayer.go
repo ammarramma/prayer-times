@@ -61,6 +61,7 @@ type Options struct {
 	HighLatitudeRule HighLatitudeRule `json:"high_latitude_rule" mapstructure:"high_latitude_rule"`
 	IhtiyatiMinutes  int              `json:"ihtiyati_minutes" mapstructure:"ihtiyati_minutes"`
 	IncludeImsak     bool             `json:"include_imsak" mapstructure:"include_imsak"`
+	Offsets          PrayerOffsets    `json:"offsets" mapstructure:"offsets"`
 }
 
 // PrayerTimes contains calculated local wall-clock times.
@@ -93,6 +94,14 @@ func DefaultOptions(method Method) Options {
 		minutes = 2
 	}
 	return Options{Method: method, Madhab: MadhabShafii, HighLatitudeRule: MiddleOfTheNight, IhtiyatiMinutes: minutes}
+} // DefaultMethod chooses the regional default for an unset method.
+func DefaultMethod(timezone string) Method {
+	switch timezone {
+	case "Asia/Jakarta", "Asia/Pontianak", "Asia/Makassar", "Asia/Jayapura":
+		return MethodKemenag
+	default:
+		return MethodMWL
+	}
 }
 
 // AvailableMethods returns calculation methods in a stable display order.
@@ -116,8 +125,8 @@ func Calculate(location Location, date time.Time, options Options) (PrayerTimes,
 		return PrayerTimes{}, fmt.Errorf("timezone %q tidak valid: %w", location.Timezone, err)
 	}
 	if options.Method == "" {
-		options.Method = MethodKemenag
-		options.IhtiyatiMinutes = 2
+		options.Method = DefaultMethod(location.Timezone)
+		options.IhtiyatiMinutes = DefaultOptions(options.Method).IhtiyatiMinutes
 	}
 	if options.Madhab == "" {
 		options.Madhab = MadhabShafii
@@ -126,7 +135,14 @@ func Calculate(location Location, date time.Time, options Options) (PrayerTimes,
 		options.HighLatitudeRule = MiddleOfTheNight
 	}
 	if options.IhtiyatiMinutes < 0 || options.IhtiyatiMinutes > 60 {
-		return PrayerTimes{}, fmt.Errorf("ihtiyati harus antara 0 dan 60 menit")
+		return PrayerTimes{}, fmt.Errorf("safety margin must be between 0 and 60 minutes")
+	}
+	if err := options.Offsets.validate(); err != nil {
+		return PrayerTimes{}, err
+	}
+	profile, err := ProfileFor(options.Method)
+	if err != nil {
+		return PrayerTimes{}, err
 	}
 	method, params, err := parametersFor(options)
 	if err != nil {
@@ -196,21 +212,17 @@ func Calculate(location Location, date time.Time, options Options) (PrayerTimes,
 	if options.Method == MethodKemenag {
 		correction = options.IhtiyatiMinutes
 	}
-	adjusted := func(t time.Time, methodMinutes int, ihtiyatiMinutes int) time.Time {
-		return ceilToMinute(t.In(tz)).Add(time.Duration(methodMinutes+ihtiyatiMinutes) * time.Minute)
-	}
-	adjustments := params.MethodAdjustments
-	dhuhrIhtiyati := correction
-	if options.Method == MethodKemenag && correction > 0 {
-		dhuhrIhtiyati++
+	offsets := profile.adjustedOffsets(options)
+	adjusted := func(t time.Time, methodMinutes int) time.Time {
+		return profile.round(t.In(tz)).Add(time.Duration(methodMinutes) * time.Minute)
 	}
 	result := PrayerTimes{
-		Fajr:            adjusted(fajr, adjustments.FajrAdj, correction),
-		Sunrise:         adjusted(sunrise, adjustments.SunriseAdj, -correction),
-		Dhuhr:           adjusted(transit, adjustments.DhuhrAdj, dhuhrIhtiyati),
-		Asr:             adjusted(asr, adjustments.AsrAdj, correction),
-		Maghrib:         adjusted(sunset, adjustments.MaghribAdj, correction),
-		Isha:            adjusted(isha, adjustments.IshaAdj, correction),
+		Fajr:            adjusted(fajr, offsets.Fajr),
+		Sunrise:         adjusted(sunrise, offsets.Sunrise),
+		Dhuhr:           adjusted(transit, offsets.Dhuhr),
+		Asr:             adjusted(asr, offsets.Asr),
+		Maghrib:         adjusted(sunset, offsets.Maghrib),
+		Isha:            adjusted(isha, offsets.Isha),
 		Method:          options.Method,
 		Madhab:          options.Madhab,
 		Ihtiyati:        options.Method == MethodKemenag && correction != 0,
@@ -239,29 +251,19 @@ func ceilToMinute(t time.Time) time.Time {
 }
 
 func parametersFor(options Options) (calc.CalculationMethod, *calc.CalculationParameters, error) {
-	methodMap := map[Method]calc.CalculationMethod{
-		MethodKemenag:               calc.OTHER,
-		MethodMWL:                   calc.MUSLIM_WORLD_LEAGUE,
-		MethodUmmAlQura:             calc.UMM_AL_QURA,
-		MethodEgyptian:              calc.EGYPTIAN,
-		MethodKarachi:               calc.KARACHI,
-		MethodISNA:                  calc.NORTH_AMERICA,
-		MethodSingapore:             calc.SINGAPORE,
-		MethodDubai:                 calc.DUBAI,
-		MethodMoonsightingCommittee: calc.MOON_SIGHTING_COMMITTEE,
-		MethodKuwait:                calc.KUWAIT,
-		MethodQatar:                 calc.QATAR,
-		MethodUOIF:                  calc.UOIF,
-	}
+	methodMap := calculationMethods()
 	method, ok := methodMap[options.Method]
 	if !ok {
 		return 0, nil, fmt.Errorf("metode kalkulasi tidak dikenal: %q", options.Method)
 	}
 	params := calc.GetMethodParameters(method)
-	if options.Method == MethodKemenag {
-		params.FajrAngle = 20
-		params.IshaAngle = 18
+	profile, err := ProfileFor(options.Method)
+	if err != nil {
+		return 0, nil, err
 	}
+	params.FajrAngle = profile.FajrAngle
+	params.IshaAngle = profile.IshaAngle
+	params.IshaInterval = profile.IshaInterval
 	switch options.Madhab {
 	case MadhabShafii:
 		params.Madhab = calc.SHAFI_HANBALI_MALIKI
