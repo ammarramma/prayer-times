@@ -7,6 +7,7 @@ import (
 
 	"github.com/ammarramma/prayer-times/internal/prayer"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 func TestNavigationAndQuit(t *testing.T) {
@@ -30,6 +31,15 @@ func TestNavigationAndQuit(t *testing.T) {
 	}
 	if got := model.Date.Day(); got != 28 {
 		t.Fatalf("tanggal setelah right = %d, mau 28", got)
+	}
+	model.now = time.Date(2026, time.October, 29, 2, 0, 0, 0, time.FixedZone("lain", -5*60*60))
+	updated, command = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'t'}})
+	model = updated.(Model)
+	if command != nil {
+		t.Fatal("t tidak seharusnya quit")
+	}
+	if got := model.Date.In(mustLocation(t, location.Timezone)).Format("2006-01-02"); got != "2026-10-29" {
+		t.Fatalf("tanggal setelah t = %s, mau 2026-10-29", got)
 	}
 
 	updated, command = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'q'}})
@@ -58,6 +68,80 @@ func TestLipglossViewShowsUpcomingAndCountdown(t *testing.T) {
 	if view = model.View(); !strings.Contains(view, "Isya") {
 		t.Errorf("layout sempit tidak memuat shalat: %s", view)
 	}
+	if !strings.Contains(view, "Terbit") || strings.Contains(view, "Imsak") {
+		t.Errorf("Terbit harus tampil dan Imsak default harus tersembunyi: %s", view)
+	}
+	regularBox := model.styles.prayer.Render("Dzuhur\n12:00")
+	nextBox := model.styles.next.Render("Subuh\n05:00")
+	if lipgloss.Width(regularBox) != lipgloss.Width(nextBox) || lipgloss.Height(regularBox) != lipgloss.Height(nextBox) {
+		t.Errorf("dimensi box reguler %dx%d berbeda dengan box berikutnya %dx%d", lipgloss.Width(regularBox), lipgloss.Height(regularBox), lipgloss.Width(nextBox), lipgloss.Height(nextBox))
+	}
+	withImsak := prayer.DefaultOptions(prayer.MethodKemenag)
+	withImsak.IncludeImsak = true
+	modelWithImsak := New(location, withImsak, date)
+	modelWithImsak.now = model.now
+	if !strings.Contains(modelWithImsak.View(), "Imsak") {
+		t.Error("Imsak harus tampil jika opsi diaktifkan")
+	}
+	for _, line := range strings.Split(view, "\n") {
+		if lipgloss.Width(line) > model.Width {
+			t.Errorf("baris melampaui lebar %d (%d): %q", model.Width, lipgloss.Width(line), line)
+		}
+	}
+}
+
+func TestAfterIshaTargetsTomorrowFajr(t *testing.T) {
+	location := prayer.DefaultLocation()
+	zone := mustLocation(t, location.Timezone)
+	date := time.Date(2026, time.October, 28, 0, 0, 0, 0, zone)
+	now := time.Date(2026, time.October, 28, 20, 0, 0, 0, zone)
+	options := prayer.DefaultOptions(prayer.MethodKemenag)
+	times, err := prayer.Calculate(location, date, options)
+	if err != nil {
+		t.Fatal(err)
+	}
+	target, err := nextPrayer(times, date, now, location, options)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if target.name != "Subuh" || target.time.In(zone).Format("2006-01-02") != "2026-10-29" {
+		t.Fatalf("target = %s %s, mau Subuh 2026-10-29", target.name, target.time.In(zone))
+	}
+	remaining := target.time.Sub(now)
+	if remaining <= 0 || remaining < 9*time.Hour || remaining > 10*time.Hour {
+		t.Fatalf("countdown sampai Subuh = %s, mau positif sekitar 09 jam", remaining)
+	}
+	if got := countdown(now, target.time); !strings.HasPrefix(got, "09:") {
+		t.Errorf("countdown = %q, mau sekitar 09 jam", got)
+	}
+}
+
+func TestCountdownHiddenForOtherDisplayedDate(t *testing.T) {
+	location := prayer.DefaultLocation()
+	zone := mustLocation(t, location.Timezone)
+	model := New(location, prayer.DefaultOptions(prayer.MethodKemenag), time.Date(2026, time.October, 27, 0, 0, 0, 0, zone))
+	model.now = time.Date(2026, time.October, 28, 12, 0, 0, 0, zone)
+	view := model.View()
+	if strings.Contains(view, "BERIKUTNYA") || strings.Contains(view, "Menuju ") {
+		t.Fatalf("tanggal lain seharusnya tidak menampilkan label countdown: %s", view)
+	}
+}
+
+func TestFullscreenCentersContentAtWindowSize(t *testing.T) {
+	location := prayer.DefaultLocation()
+	model := New(location, prayer.DefaultOptions(prayer.MethodKemenag), time.Date(2026, time.October, 28, 0, 0, 0, 0, mustLocation(t, location.Timezone)))
+	model.Fullscreen = true
+	updated, _ := model.Update(tea.WindowSizeMsg{Width: 100, Height: 40})
+	model = updated.(Model)
+	if model.Width != 100 || model.Height != 40 {
+		t.Fatalf("ukuran model = %dx%d, mau 100x40", model.Width, model.Height)
+	}
+	if view := model.View(); !strings.Contains(view, "JADWAL WAKTU SHALAT") || !strings.Contains(view, "←/→: ubah hari") {
+		t.Fatalf("konten fullscreen hilang: %s", view)
+	}
+	if lines := strings.Split(model.View(), "\n"); len(lines) != model.Height {
+		t.Errorf("tinggi output fullscreen = %d baris, mau %d", len(lines), model.Height)
+	}
 }
 
 func TestCtrlCQuits(t *testing.T) {
@@ -66,4 +150,13 @@ func TestCtrlCQuits(t *testing.T) {
 	if command == nil {
 		t.Fatal("Ctrl+C harus meminta keluar")
 	}
+}
+
+func mustLocation(t *testing.T, name string) *time.Location {
+	t.Helper()
+	location, err := time.LoadLocation(name)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return location
 }

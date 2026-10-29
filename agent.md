@@ -24,7 +24,11 @@ Aplikasi jadwal waktu shalat worldwide yang mendukung kota mana pun dengan koord
 prayer-times/
 ├── agent.md          # Konteks untuk AI agent (file ini)
 ├── langkah.md        # Tracking progress per fase
-├── main.go           # Entry point aplikasi
+├── main.go           # Entry point aplikasi dan flag versi
+├── LICENSE           # Lisensi MIT
+├── PKGBUILD          # Build package Arch Linux
+├── scripts/
+│   └── build-release.sh # Build arsip binary rilis linux/amd64 dan linux/arm64
 ├── internal/
 │   ├── prayer/       # Core logic kalkulasi waktu shalat
 │   ├── tui/          # Bubble Tea components dan styling Lipgloss
@@ -32,7 +36,9 @@ prayer-times/
 │   └── config/       # Struktur dan config JSON melalui Viper
 ├── go.mod
 ├── go.sum
-└── PKGBUILD          # (Fase 5) Package build script untuk AUR
+└── .SRCINFO          # Metadata package Arch untuk AUR
+
+Dist rilis `dist/` dibuat oleh `scripts/build-release.sh` dan tidak disimpan di Git. `main.go` menyediakan flag `-version`; versi rilis di-inject melalui ldflags, sedangkan build lokal melaporkan `dev`.
 ```
 
 ## Prinsip Development

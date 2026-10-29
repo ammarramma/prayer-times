@@ -58,9 +58,21 @@
 - [x] Countdown detik-ke-detik
 - [x] Layout melebar/menyempit mengikuti ukuran terminal
 - [x] Tes DOM string/layout lebar dan sempit
-- [ ] Jalankan seluruh verifikasi dan commit Fase 3
+- [x] Countdown setelah Isya mengarah ke Subuh besok dan tetap positif
+- [x] Sembunyikan label berikutnya/countdown saat menampilkan tanggal selain hari ini
+- [x] Samakan tinggi box, tampilkan Terbit sebagai info, dan batasi lebar baris metadata
+- [x] Tombol `t` kembali ke hari ini menurut timezone lokasi
+- [x] Mode `-fullscreen` memakai alt screen dan memusatkan konten; inline tetap default
+- [x] Jalankan `go test ./...`, `go vet ./...`, dan `go build ./...`
+- [ ] Commit Fase 3
 
-**Status**: Implementasi selesai, verifikasi final dan commit menyusul.
+**Status**: Implementasi dan verifikasi selesai; commit menyusul.
+
+**Catatan keputusan UI**:
+- `BERIKUTNYA` diletakkan di bawah deretan box, bukan di dalam box highlight, agar semua box punya dimensi sama.
+- Countdown dan highlight hanya muncul saat tanggal terpilih sama dengan hari ini di timezone lokasi. Setelah Isya, jadwal Subuh dihitung ulang untuk tanggal kalender besok di timezone lokasi.
+- Baris metode/madhab/ihtiyati dibungkus oleh Lipgloss pada lebar terminal; Terbit tetap berupa baris info terpisah dan tidak menjadi target countdown.
+- Mode inline tetap default. `-fullscreen` hanya mengaktifkan alt screen dan pemusatan menggunakan ukuran terminal yang diterima dari Bubble Tea.
 
 ---
 
@@ -82,30 +94,30 @@
 
 ---
 
-## Fase 5: Build & Publish ke AUR 🔵
-**Tujuan**: Release aplikasi ke AUR
+## Fase 5: Persiapan rilis v0.1.0 🔵
+**Tujuan**: Siapkan binary Linux, package Arch, lisensi, dan dokumentasi; unggah rilis atau submit AUR dilakukan manual oleh pemilik repo.
 
 ### Checklist
-- [ ] Cleanup & final testing
-- [ ] Buat README.md lengkap
-  - [ ] Cara install
-  - [ ] Cara konfigurasi
-  - [ ] Screenshots/Demo
-- [ ] Push ke GitHub
-- [ ] Buat GitHub Release
-  - [ ] Tag version (v1.0.0)
-  - [ ] Build binary untuk release
-  - [ ] Upload binary ke release
-- [ ] Tulis PKGBUILD
-  - [ ] Test build lokal dengan makepkg
-  - [ ] Verify PKGBUILD valid
-- [ ] Submit ke AUR
-  - [ ] Buat AUR account jika belum ada
-  - [ ] Push PKGBUILD ke AUR git
-- [ ] Test install: `yay -S prayer-times`
-- [ ] Commit: "Fase 5: AUR release ready"
+- [x] Tambahkan lisensi MIT (2026, Ammar Ramma), `.gitignore`, dan flag `-version`
+- [x] README instalasi (Go, binary, PKGBUILD, AUR segera hadir), catatan akurasi, dan placeholder screenshot
+- [x] Skrip `scripts/build-release.sh` menghasilkan linux/amd64, linux/arm64, dan SHA256SUMS; uji dengan v0.1.0-test
+- [x] Verifikasi binary amd64: `-version` dan jadwal `-date 2026-10-29`
+- [x] Tulis PKGBUILD dan hasilkan `.SRCINFO`
+- [x] Tes package lokal dengan `makepkg -f` memakai tarball lokal sementara; tahap build/check/package lulus pada x86_64
+- [ ] Jalankan namcap — tool tidak terpasang di lingkungan ini
+- [x] Cek remote: `origin` = `https://github.com/ammarramma/prayer-times.git`
+- [x] Cek Go repo Arch (`pacman -Si go`): `1.27.3-1` di `extra`, memenuhi `go 1.27.1` di go.mod
+- [ ] Push branch, buat/push tag v0.1.0, dan buat GitHub Release — jangan dijalankan oleh agent; pemilik repo menjalankannya manual
+- [ ] Submit ke AUR — menunggu pendaftaran akun AUR dibuka
 
-**Status**: Belum Dimulai
+**Catatan keputusan & keterbatasan**:
+- Tidak ada perintah push, pembuatan tag, `gh release`, atau pengiriman lain yang dijalankan. Arsip lokal uji `v0.1.0-test` dihapus sebelum commit.
+- `sha256sums=('SKIP')` sengaja sementara; setelah tag v0.1.0 tersedia di GitHub, jalankan `updpkgsums` dan commit pembaruan PKGBUILD/.SRCINFO.
+- PKGBUILD lokal diuji terhadap tarball sementara `prayer-times-0.1.0.tar.gz` di `/tmp`, dibuat dari `git archive HEAD` ditambah perubahan working tree yang diperlukan untuk menyamakan `main.go` dan TUI. URL file lokal hanya dipakai pada salinan PKGBUILD sementara; PKGBUILD root tetap memakai URL tag GitHub. `makepkg -f --noconfirm` lulus untuk x86_64 dan menjalankan `go test ./...` pada tahap check.
+- `namcap` belum terpasang sehingga pemeriksaan PKGBUILD/paket dilewati; jalankan manual ketika tersedia.
+- Placeholder gambar README merujuk ke `docs/screenshot.png`; screenshot asli belum disediakan dan tidak dibuat palsu.
+- Versi Go repo Arch memenuhi syarat saat dicek; `go.mod` tidak diturunkan.
+- Binary lintas kompilasi dibuat untuk Linux amd64 dan arm64 dengan CGO dinonaktifkan. `dist/` dihapus setelah uji lokal agar artefak tidak ikut commit.
 
 ---
 
@@ -117,4 +129,4 @@
 
 ---
 
-**Last Updated**: 2026-10-28
+**Last Updated**: 2026-10-29

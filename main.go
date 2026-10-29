@@ -13,6 +13,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+var version = "dev"
+
 func main() {
 	configPathDefault, err := config.DefaultPath()
 	if err != nil {
@@ -28,9 +30,15 @@ func main() {
 	highLatitude := flag.String("high-latitude", "", "aturan lintang tinggi (middle_of_the_night, seventh_of_the_night, twilight_angle)")
 	ihtiyati := flag.Int("ihtiyati", -1, "koreksi ihtiyati dalam menit (khusus Kemenag)")
 	includeImsak := flag.Bool("imsak", false, "tampilkan imsak (10 menit sebelum Subuh)")
+	fullscreen := flag.Bool("fullscreen", false, "jalankan TUI pada layar penuh (alt screen)")
 	dateFlag := flag.String("date", "", "tanggal Gregorian YYYY-MM-DD (default hari ini di zona lokasi)")
 	setConfig := flag.Bool("set-config", false, "simpan nilai flag lokasi/metode ke config, tanpa menjalankan TUI")
+	showVersion := flag.Bool("version", false, "tampilkan versi aplikasi")
 	flag.Parse()
+	if *showVersion {
+		fmt.Println(version)
+		return
+	}
 
 	cfg, err := config.Load(*configPath)
 	if err != nil {
@@ -92,7 +100,13 @@ func main() {
 		printSchedule(cfg.Location, date, times)
 		return
 	}
-	program := tea.NewProgram(tui.New(cfg.Location, cfg.Options, date))
+	model := tui.New(cfg.Location, cfg.Options, date)
+	model.Fullscreen = *fullscreen
+	programOptions := []tea.ProgramOption{}
+	if *fullscreen {
+		programOptions = append(programOptions, tea.WithAltScreen())
+	}
+	program := tea.NewProgram(model, programOptions...)
 	if _, err := program.Run(); err != nil {
 		fail("TUI", err)
 	}

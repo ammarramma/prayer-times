@@ -14,7 +14,11 @@
 # Build artifacts
 prayer-times
 /bin
-/dist
+dist/
+pkg/
+src/
+*.pkg.tar.*
+.freebuff/
 
 # Go workspace file
 go.work
