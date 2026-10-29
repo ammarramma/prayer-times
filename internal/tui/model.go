@@ -85,30 +85,36 @@ func (m Model) View() string {
 	fmt.Fprintln(&view)
 
 	isToday := displayedDateIsToday(m.Date, m.now, m.Location.Timezone)
-	var upcoming prayerTime
+	var status prayer.PrayerStatus
 	if isToday {
 		var err error
-		upcoming, err = nextPrayer(m.times, m.Date, m.now, m.Location, m.Options)
+		status, err = prayer.Status(m.Location, m.Options, m.now)
 		if err != nil {
 			return m.styles.error.Render(fmt.Sprintf("Kesalahan kalkulasi: %v", err))
 		}
 	}
 	prayers := []struct {
+		id   prayer.PrayerName
 		name string
 		time time.Time
 	}{
-		{i18n.Fajr, m.times.Fajr},
-		{i18n.Dhuhr, m.times.Dhuhr},
-		{i18n.Asr, m.times.Asr},
-		{i18n.Maghrib, m.times.Maghrib},
-		{i18n.Isha, m.times.Isha},
+		{prayer.Fajr, i18n.Fajr, m.times.Fajr},
+		{prayer.Dhuhr, i18n.Dhuhr, m.times.Dhuhr},
+		{prayer.Asr, i18n.Asr, m.times.Asr},
+		{prayer.Maghrib, i18n.Maghrib, m.times.Maghrib},
+		{prayer.Isha, i18n.Isha, m.times.Isha},
 	}
 	boxes := make([]string, 0, len(prayers))
 	for _, current := range prayers {
 		content := fmt.Sprintf("%s\n%s", current.name, current.time.Format("15:04"))
-		if isToday && current.name == upcoming.name && current.time.Equal(upcoming.time) {
+		switch {
+		case isToday && status.Now != nil && current.id == status.Now.Name:
 			boxes = append(boxes, m.styles.next.Render(content))
-		} else {
+		case isToday && status.Now != nil && current.id == status.Next.Name:
+			boxes = append(boxes, m.styles.nextDuringNow.Render(content))
+		case isToday && status.Now == nil && current.id == status.Next.Name:
+			boxes = append(boxes, m.styles.next.Render(content))
+		default:
 			boxes = append(boxes, m.styles.prayer.Render(content))
 		}
 	}
@@ -118,7 +124,14 @@ func (m Model) View() string {
 		fmt.Fprintln(&view, lipgloss.JoinVertical(lipgloss.Left, boxes...))
 	}
 	if isToday {
-		fmt.Fprintf(&view, "BERIKUTNYA: %s\n", upcoming.name)
+		if status.Now != nil {
+			fmt.Fprintf(&view, "NOW: %s · started %d min ago\n", displayPrayerName(status.Now.Name), int(m.now.Sub(status.Now.Time)/time.Minute))
+		}
+		label := "NEXT: " + displayPrayerName(status.Next.Name)
+		if status.Next.Tomorrow {
+			label += " (tomorrow)"
+		}
+		fmt.Fprintf(&view, "%s · in %s\n", label, countdown(m.now, status.Next.Time))
 	}
 	fmt.Fprintf(&view, "%s  %s\n", i18n.Sunrise, m.times.Sunrise.Format("15:04"))
 	if !m.times.Imsak.IsZero() {
@@ -131,9 +144,6 @@ func (m Model) View() string {
 		metadataWidth = 1
 	}
 	fmt.Fprintln(&view, lipgloss.NewStyle().MaxWidth(metadataWidth).Render(metadata))
-	if isToday {
-		fmt.Fprintf(&view, "Menuju %s: %s\n", upcoming.name, countdown(m.now, upcoming.time))
-	}
 	fmt.Fprintln(&view, m.styles.footer.MaxWidth(metadataWidth).Render("←/→: ubah hari   t: hari ini   q/Ctrl+C: keluar"))
 	content := view.String()
 	if m.Fullscreen {
@@ -153,29 +163,6 @@ func tick() tea.Cmd {
 	return tea.Tick(time.Second, func(now time.Time) tea.Msg { return tickMsg(now) })
 }
 
-func nextPrayer(times prayer.PrayerTimes, date, now time.Time, location prayer.Location, options prayer.Options) (prayerTime, error) {
-	entries := []prayerTime{
-		{i18n.Fajr, times.Fajr}, {i18n.Dhuhr, times.Dhuhr}, {i18n.Asr, times.Asr}, {i18n.Maghrib, times.Maghrib}, {i18n.Isha, times.Isha},
-	}
-	zone, err := time.LoadLocation(location.Timezone)
-	if err != nil {
-		return prayerTime{}, err
-	}
-	currentDate := now.In(zone)
-	for _, entry := range entries {
-		if entry.time.After(currentDate) {
-			return entry, nil
-		}
-	}
-	tomorrow := date.In(zone).AddDate(0, 0, 1)
-	tomorrow = time.Date(tomorrow.Year(), tomorrow.Month(), tomorrow.Day(), 0, 0, 0, 0, zone)
-	tomorrowTimes, err := prayer.Calculate(location, tomorrow, options)
-	if err != nil {
-		return prayerTime{}, err
-	}
-	return prayerTime{i18n.Fajr, tomorrowTimes.Fajr}, nil
-}
-
 func displayedDateIsToday(date, now time.Time, timezone string) bool {
 	location, err := time.LoadLocation(timezone)
 	if err != nil {
@@ -184,9 +171,21 @@ func displayedDateIsToday(date, now time.Time, timezone string) bool {
 	return date.In(location).Format("2006-01-02") == now.In(location).Format("2006-01-02")
 }
 
-type prayerTime struct {
-	name string
-	time time.Time
+func displayPrayerName(name prayer.PrayerName) string {
+	switch name {
+	case prayer.Fajr:
+		return i18n.Fajr
+	case prayer.Dhuhr:
+		return i18n.Dhuhr
+	case prayer.Asr:
+		return i18n.Asr
+	case prayer.Maghrib:
+		return i18n.Maghrib
+	case prayer.Isha:
+		return i18n.Isha
+	default:
+		return string(name)
+	}
 }
 
 func countdown(now, target time.Time) string {
