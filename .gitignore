@@ -17,6 +17,11 @@ prayer-times
 dist/
 pkg/
 src/
+
+# Generated repository snapshots and local package archive
+digest.txt
+prayer-times-tui-0.1.0.tar.gz
+.cli-integration-*/
 *.pkg.tar.*
 .freebuff/
 
