@@ -8,7 +8,7 @@ license=('MIT')
 depends=('glibc')
 makedepends=('go')
 source=("$pkgname-$pkgver.tar.gz::https://github.com/ammarramma/prayer-times/archive/refs/tags/v$pkgver.tar.gz")
-sha256sums=('SKIP')
+sha256sums=('68f37eb08a5730a9340bded3107a9948e0251904de9e408b234db321dfaaed56')
 
 prepare() {
   cd "$srcdir/prayer-times-$pkgver"
