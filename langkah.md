@@ -25,9 +25,31 @@
 **Catatan keputusan & akurasi**:
 - `adhango v0.1.0` menyediakan preset metode, madhab, high-latitude rule, dan adjustment per shalat. API kalkulasi membulatkan ke menit terdekat; implementasi domain memakai komponen waktu astronomy dan membulatkan **ke atas** setelah adjustment agar syarat Kemenag terpenuhi.
 - Kemenag menggunakan Fajr 20° dan Isha 18°; ihtiyati manual ditambahkan hanya untuk metode Kemenag. Preset lain mempertahankan koreksi bawaan masing-masing, tanpa ihtiyati aplikasi.
-- Fixture jadwal Oktober 2026 bersumber dari tabel jadwal Lhokseumawe Tirto yang menyebut Bimas Islam/Kemenag sebagai sumber: [Tirto — jadwal Lhokseumawe](https://jadwal-sholat.tirto.id/kota-lhokseumawe). Situs resmi SIHAT bersifat dinamis; pembaca halaman tidak dapat mengambil datanya secara langsung. Fixture Subuh/Ashar/Maghrib/Isya memakai toleransi ±1 menit; Dzuhur wajib tepat (toleransi 0).
-- Setelah koreksi ihtiyati Dzuhur menjadi dasar +1 menit, selisih terhadap fixture untuk Subuh/Ashar/Maghrib/Isya adalah: 2026-10-01 = 0/0/0/0 menit; 2026-10-16 = 0/−1/0/0 menit; 2026-10-28 = 0/0/−1/0 menit. Urutan kolom: Subuh/Ashar/Maghrib/Isya. Rumus Maghrib tidak diubah; selisih −1 menit pada 2026-10-28 tetap dicatat menunggu data jadwal resmi yang lebih kuat. Terbit tidak tercakup fixture ini, sehingga tidak ada selisih Terbit yang dapat dilaporkan atau dasar untuk mengubah rumusnya.
+- Fixture jadwal Oktober 2026 bersumber dari tabel jadwal Lhokseumawe Tirto yang menyebut Bimas Islam/Kemenag sebagai sumber: [Tirto — jadwal Lhokseumawe](https://jadwal-sholat.tirto.id/kota-lhokseumawe). Situs resmi SIHAT bersifat dinamis; pembaca halaman tidak dapat mengambil datanya secara langsung. Fixture yang tepat memakai toleransi 0; Ashar 2026-10-16 dan Maghrib 2026-10-28 tetap ±1 menit karena selisih yang belum dapat dijelaskan.
+- Selisih terhadap fixture untuk Fajr/Ashar/Maghrib/Isha: 2026-10-01 = 0/0/0/0 menit; 2026-10-16 = 0/−1/0/0 menit; 2026-10-28 = 0/0/−1/0 menit. Fajr dan Isha lulus ketat 0; Ashar 2026-10-16 dan Maghrib 2026-10-28 dibiarkan ±1 menit. Rumus Maghrib tidak diubah. Terbit tak termasuk tiga fixture tersebut; observasi nonresmi 2026-10-29 di bawah menunjukkan selisih yang masih perlu data resmi.
 - `adhango` tidak mempertahankan timezone input untuk hasil astronomi; tanggal kalender lokal dipakai sebagai tanggal Gregorian setempat, dan hasil dikonversi ke timezone lokasi sebelum pembulatan waktu sipil.
+
+---
+
+## Stabilisasi global (2026-10-29)
+
+- [x] Titik aman: baseline repository dikomit setelah `go build ./...`, `go vet ./...`, `go test ./...` lulus.
+- [x] Snapshot baseline 12 metode × 6 kota × 2 tanggal di `internal/prayer/testdata/golden.json`; tes mencegah perubahan hasil menit.
+- [x] Status NOW/NEXT murni berbasis waktu jadwal keluaran, jendela 15 menit, box NEXT biru selama NOW, dan teks eksplisit.
+- [x] Locale `en` default, `id` opsional via `-lang` atau config.
+- [x] Profil metode dan offset pengguna; default metode menurut zona; profil non-Kemenag tidak mengubah golden.
+- [x] Tes fixture Kemenag ketat untuk semua nilai cocok; dua selisih tetap ±1 menit dengan komentar.
+- [x] Tes DST London/Sydney serta Tromsø untuk seluruh metode.
+- [ ] Dokumentasi akurasi Inggris dan README Inggris.
+
+**Open items — belum diputuskan tanpa data resmi**
+
+- Selisih Maghrib dan Terbit Lhokseumawe tidak ditambal; rumus Maghrib/Terbit tidak diubah. Observasi tidak resmi 2026-10-29 (bukan fixture): aplikasi Android: Imsak 04:50, Subuh 05:00, Terbit 06:17, Dhuha 06:41, Dzuhur 12:19, Ashar 15:38, Maghrib 18:17, Isya 19:27. Google, basis “Kemenag Jakarta Pusat”, tanpa ihtiyati: Fajr 04:58, Sunrise 06:17, Dhuhr 12:15, Asr 15:36, Maghrib 18:14, Isha 19:24. Proyek: Sunrise 06:15 dan Maghrib 18:16.
+- Data yang diperlukan: tabel resmi Bimas Islam untuk Lhokseumawe sekurang-kurangnya 5 tanggal pada Oktober 2026, termasuk rincian Terbit/Maghrib. Hipotesis tentang perbedaan koordinat, zona, atau konvensi koreksi belum terbukti.
+- Sumber preset metode adhango: API/preset dependency lokal; verifikasi terhadap otoritas lokal belum dilakukan. Dicatat unverified kecuali Kemenag partial.
+- Positional argumen ditolak oleh CLI dengan pesan Inggris; awalnya diminta sebagai kerja opsional, tetapi ditambahkan sebagai perlindungan langsung terhadap kasus argumen `.` yang dijelaskan di brief.
+
+**Keputusan stabilisasi**: baseline saat ini memiliki dua file tambahan tracked (`digest.txt`, `prayer-times-tui-0.1.0.tar.gz`); keduanya dipertahankan dan diamankan dalam commit baseline, bukan dibuang sebagai perubahan pengguna. Snapshot tanggal dipilih 2026-10-28 dan 2026-06-21 untuk mencakup musim dan tetap bisa direproduksi.
 
 ---
 

@@ -63,9 +63,9 @@ func TestKemenagLhokseumaweAgainstOfficialSchedule(t *testing.T) {
 				actualMinute := pair.actual.Hour()*60 + pair.actual.Minute()
 				wantMinute := want.Hour()*60 + want.Minute()
 				delta := actualMinute - wantMinute
-				tolerance := 1
-				if pair.name == "Dzuhur" {
-					tolerance = 0
+				tolerance := 0
+				if (fixture.date == "2026-10-16" && pair.name == "Ashar") || (fixture.date == "2026-10-28" && pair.name == "Maghrib") {
+					tolerance = 1 // selisih satu menit tidak boleh ditambal tanpa tabel resmi.
 				}
 				if delta < -tolerance || delta > tolerance {
 					t.Errorf("%s = %s, jadwal Kemenag %s (selisih %d menit)", pair.name, pair.actual.Format("15:04"), pair.expected, delta)
