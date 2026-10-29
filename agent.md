@@ -1,7 +1,7 @@
 # Agent Context - Prayer Times TUI
 
 ## Tentang Proyek
-Aplikasi jadwal waktu shalat worldwide yang mendukung kota mana pun dengan koordinat dan timezone IANA. Kemenag RI tersedia sebagai salah satu metode kalkulasi dan menjadi metode default yang menjaga akurasi untuk Indonesia. Proyek ini direncanakan dirilis ke AUR (Arch User Repository).
+Aplikasi jadwal waktu shalat global dengan koordinat dan timezone IANA. UI dan output CLI memakai bahasa Inggris sebagai default; `-lang id` memilih Indonesia. Kemenag dipilih otomatis untuk zona waktu Indonesia yang ditentukan, sedangkan zona lain memakai MWL bila metode tidak diatur eksplisit. Proyek Go ini memakai Bubble Tea, Lipgloss, Viper, dan adhango.
 
 ## Tech Stack
 - **Bahasa**: Go
@@ -13,11 +13,12 @@ Aplikasi jadwal waktu shalat worldwide yang mendukung kota mana pun dengan koord
 ## Lokasi dan Kalkulasi
 - **Lokasi Default**: Lhokseumawe, Aceh (5.1801, 97.1406; `Asia/Jakarta`); nama, koordinat, dan timezone lain diberikan melalui config/flag.
 - `internal/prayer.Location` memakai timezone IANA, bukan timezone mesin.
-- **Metode**: Kemenag (Fajr 20°, Isha 18°, default), MWL, Umm al-Qura, Egyptian, Karachi, ISNA, Singapore, Dubai, Moonsighting Committee, Kuwait, Qatar, UOIF.
-- **Ihtiyati Kemenag**: default +2 menit untuk Subuh, Ashar, Maghrib, dan Isya; Dzuhur memakai ihtiyati dasar +1 menit (total +3 menit); Terbit dikurangi 2 menit. Imsak opsional adalah Subuh −10 menit. Metode lain tidak mendapat koreksi ihtiyati aplikasi.
+- **Metode**: Kemenag (Fajr 20°, Isha 18°), MWL, Umm al-Qura, Egyptian, Karachi, ISNA, Singapore, Dubai, Moonsighting Committee, Kuwait, Qatar, UOIF. Default tak eksplisit: Kemenag untuk `Asia/Jakarta`, `Asia/Pontianak`, `Asia/Makassar`, `Asia/Jayapura`; MWL selainnya. Default lokasi Lhokseumawe tetap Kemenag.
+- **Ihtiyati Kemenag**: default +2 menit untuk Fajr, Asr, Maghrib, Isha; Dhuhr +3; Sunrise −2. Imsak opsional adalah Fajr −10 menit. `Options.Offsets` ditambahkan setelah preset untuk semua metode.
 - Pembulatan waktu keluaran: detik/nanodetik lebih dari nol selalu dibulatkan naik ke menit berikutnya.
 - Madhab Asr: Shafii (default) atau Hanafi. Aturan lintang tinggi: Middle of the Night (default), Seventh of the Night, atau Twilight Angle.
-- Label presentasi berada di `internal/i18n` agar mendukung lokalisasi.
+- `internal/i18n.Locale` mendukung English default dan Indonesian (`For("en"|"id")`).
+- Status NOW/NEXT dihitung di `internal/prayer` dari waktu yang ditampilkan; NOW berlangsung 15 menit. Sunrise bukan target status.
 
 ## Arsitektur
 ```
@@ -34,6 +35,7 @@ prayer-times/
 │   ├── tui/          # Bubble Tea components dan styling Lipgloss
 │   ├── i18n/         # String label per locale
 │   └── config/       # Struktur dan config JSON melalui Viper
+├── docs/accuracy.md  # Parameter profil, verifikasi, dan fixture
 ├── go.mod
 ├── go.sum
 └── .SRCINFO          # Metadata package Arch untuk AUR
@@ -48,9 +50,10 @@ Dist rilis `dist/` dibuat oleh `scripts/build-release.sh` dan tidak disimpan di 
 4. **Documentation**: Selalu update langkah.md setiap menyelesaikan sub-task
 
 ## Notes untuk Agent
-- Gunakan bahasa Indonesia untuk dokumentasi dan commit messages
+- README dan `docs/accuracy.md` berbahasa Inggris; `agent.md`, `langkah.md`, dan pesan commit berbahasa Indonesia.
 - Saat fase 1, jangan sentuh UI sama sekali - fokus pada akurasi kalkulasi
 - Model lemah bisa refer ke file ini untuk context proyek
 - Setiap fase harus verified working sebelum lanjut
 - Core domain murni berada di `internal/prayer`; wiring entry point tetap tipis.
-- Fixture akurasi Indonesia harus memakai jadwal Kemenag yang dapat direproduksi dan mencatat sumber/toleransi di `langkah.md`. Metode non-Kemenag tidak diberi ihtiyati aplikasi.
+- Fixture akurasi Indonesia harus mencatat sumber/toleransi yang benar-benar diketahui. Selisih tak terjelaskan tidak boleh ditambal dengan perubahan rumus; rekam di `langkah.md` dan `docs/accuracy.md`.
+- Snapshot golden menjaga baseline perhitungan dan bukan bukti akurasi. Metode non-Kemenag belum diverifikasi terhadap otoritas lokal.

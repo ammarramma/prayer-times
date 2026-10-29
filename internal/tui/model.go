@@ -92,7 +92,7 @@ func (m Model) View() string {
 		var err error
 		status, err = prayer.Status(m.Location, m.Options, m.now)
 		if err != nil {
-			return m.styles.error.Render(fmt.Sprintf("Kesalahan kalkulasi: %v", err))
+			return m.styles.error.Render(fmt.Sprintf("%s: %v", m.Locale.CalculationError, err))
 		}
 	}
 	prayers := []struct {

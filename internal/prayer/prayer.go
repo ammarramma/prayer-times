@@ -112,17 +112,17 @@ func AvailableMethods() []Method {
 // Calculate computes prayer times for the given Gregorian local date.
 func Calculate(location Location, date time.Time, options Options) (PrayerTimes, error) {
 	if location.Name == "" {
-		return PrayerTimes{}, fmt.Errorf("nama lokasi tidak boleh kosong")
+		return PrayerTimes{}, fmt.Errorf("location name cannot be empty")
 	}
 	if math.IsNaN(location.Latitude) || math.IsInf(location.Latitude, 0) || location.Latitude < -90 || location.Latitude > 90 {
-		return PrayerTimes{}, fmt.Errorf("lintang harus berada antara -90 dan 90")
+		return PrayerTimes{}, fmt.Errorf("latitude must be between -90 and 90")
 	}
 	if math.IsNaN(location.Longitude) || math.IsInf(location.Longitude, 0) || location.Longitude < -180 || location.Longitude > 180 {
-		return PrayerTimes{}, fmt.Errorf("bujur harus berada antara -180 dan 180")
+		return PrayerTimes{}, fmt.Errorf("longitude must be between -180 and 180")
 	}
 	tz, err := time.LoadLocation(location.Timezone)
 	if err != nil {
-		return PrayerTimes{}, fmt.Errorf("timezone %q tidak valid: %w", location.Timezone, err)
+		return PrayerTimes{}, fmt.Errorf("invalid time zone %q: %w", location.Timezone, err)
 	}
 	if options.Method == "" {
 		options.Method = DefaultMethod(location.Timezone)
@@ -205,7 +205,7 @@ func Calculate(location Location, date time.Time, options Options) (PrayerTimes,
 	}
 	asr, err := componentsAt(solar.Afternoon(calc.MadhabToShadowLengthMap[params.Madhab]), components)
 	if err != nil {
-		return PrayerTimes{}, fmt.Errorf("gagal menghitung Ashar: %w", err)
+		return PrayerTimes{}, fmt.Errorf("failed to calculate Asr: %w", err)
 	}
 
 	correction := 0
@@ -254,7 +254,7 @@ func parametersFor(options Options) (calc.CalculationMethod, *calc.CalculationPa
 	methodMap := calculationMethods()
 	method, ok := methodMap[options.Method]
 	if !ok {
-		return 0, nil, fmt.Errorf("metode kalkulasi tidak dikenal: %q", options.Method)
+		return 0, nil, fmt.Errorf("unknown calculation method %q", options.Method)
 	}
 	params := calc.GetMethodParameters(method)
 	profile, err := ProfileFor(options.Method)
@@ -270,7 +270,7 @@ func parametersFor(options Options) (calc.CalculationMethod, *calc.CalculationPa
 	case MadhabHanafi:
 		params.Madhab = calc.HANAFI
 	default:
-		return 0, nil, fmt.Errorf("madhab tidak dikenal: %q", options.Madhab)
+		return 0, nil, fmt.Errorf("unknown Asr school %q", options.Madhab)
 	}
 	switch options.HighLatitudeRule {
 	case MiddleOfTheNight:
@@ -280,7 +280,7 @@ func parametersFor(options Options) (calc.CalculationMethod, *calc.CalculationPa
 	case TwilightAngle:
 		params.HighLatitudeRule = calc.TWILIGHT_ANGLE
 	default:
-		return 0, nil, fmt.Errorf("aturan lintang tinggi tidak dikenal: %q", options.HighLatitudeRule)
+		return 0, nil, fmt.Errorf("unknown high-latitude rule %q", options.HighLatitudeRule)
 	}
 	return method, params, nil
 }

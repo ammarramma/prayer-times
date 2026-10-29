@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-// Config menyimpan lokasi serta opsi kalkulasi aplikasi.
+// Config stores the application location, calculation options, and locale.
 type Config struct {
 	Location       prayer.Location `json:"location" mapstructure:"location"`
 	Options        prayer.Options  `json:"options" mapstructure:"options"`
@@ -17,7 +17,7 @@ type Config struct {
 	MethodExplicit bool            `json:"-" mapstructure:"-"`
 }
 
-// Default mengembalikan konfigurasi awal Kemenag di Lhokseumawe.
+// Default returns the initial Kemenag configuration for Lhokseumawe.
 func Default() Config {
 	return Config{
 		Location: prayer.DefaultLocation(),
@@ -26,16 +26,16 @@ func Default() Config {
 	}
 }
 
-// DefaultPath mengembalikan lokasi file config standar XDG.
+// DefaultPath returns the standard user config path.
 func DefaultPath() (string, error) {
 	base, err := os.UserConfigDir()
 	if err != nil {
-		return "", fmt.Errorf("mencari direktori konfigurasi user: %w", err)
+		return "", fmt.Errorf("locating user configuration directory: %w", err)
 	}
 	return filepath.Join(base, "prayer-times", "config.json"), nil
 }
 
-// Load membaca file JSON Viper bila tersedia; opsi flag dapat menimpa hasilnya.
+// Load reads a Viper JSON config file when present; CLI flags may override its values.
 func Load(path string) (Config, error) {
 	cfg := Default()
 	v := viper.New()
@@ -45,20 +45,20 @@ func Load(path string) (Config, error) {
 		if _, statErr := os.Stat(path); os.IsNotExist(statErr) {
 			return cfg, nil
 		}
-		return Config{}, fmt.Errorf("membaca config %s: %w", path, err)
+		return Config{}, fmt.Errorf("reading config %s: %w", path, err)
 	}
 	if err := v.Unmarshal(&cfg); err != nil {
-		return Config{}, fmt.Errorf("mem-parsing config %s: %w", path, err)
+		return Config{}, fmt.Errorf("parsing config %s: %w", path, err)
 	}
 	cfg.MethodExplicit = v.IsSet("options.method")
 	mergeDefaults(&cfg)
 	return cfg, nil
 }
 
-// Save menulis konfigurasi JSON ke path dan membuat direktori bila diperlukan.
+// Save writes the JSON configuration to path and creates its directory as needed.
 func Save(path string, cfg Config) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
-		return fmt.Errorf("membuat direktori config: %w", err)
+		return fmt.Errorf("creating config directory: %w", err)
 	}
 	v := viper.New()
 	v.SetConfigFile(path)
@@ -67,7 +67,7 @@ func Save(path string, cfg Config) error {
 	v.Set("options", cfg.Options)
 	v.Set("language", cfg.Language)
 	if err := v.WriteConfigAs(path); err != nil {
-		return fmt.Errorf("menulis config %s: %w", path, err)
+		return fmt.Errorf("writing config %s: %w", path, err)
 	}
 	return os.Chmod(path, 0o600)
 }

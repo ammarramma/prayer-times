@@ -1,6 +1,6 @@
 # Progress Tracking - Prayer Times TUI
 
-**Status Keseluruhan**: 🟡 Fase 1 direvisi: core worldwide dan uji akurasi selesai; CLI terhubung. Fase 2–4 menyusul sesuai prioritas.
+**Status Keseluruhan**: ✅ Stabilisasi global dan dokumentasi akurasi selesai (2026-10-29). Fase terdahulu dipertahankan sebagai riwayat; lihat bagian stabilisasi global dan open items.
 
 ---
 
@@ -33,6 +33,7 @@
 
 ## Stabilisasi global (2026-10-29)
 
+### Checklist
 - [x] Titik aman: baseline repository dikomit setelah `go build ./...`, `go vet ./...`, `go test ./...` lulus.
 - [x] Snapshot baseline 12 metode × 6 kota × 2 tanggal di `internal/prayer/testdata/golden.json`; tes mencegah perubahan hasil menit.
 - [x] Status NOW/NEXT murni berbasis waktu jadwal keluaran, jendela 15 menit, box NEXT biru selama NOW, dan teks eksplisit.
@@ -40,7 +41,9 @@
 - [x] Profil metode dan offset pengguna; default metode menurut zona; profil non-Kemenag tidak mengubah golden.
 - [x] Tes fixture Kemenag ketat untuk semua nilai cocok; dua selisih tetap ±1 menit dengan komentar.
 - [x] Tes DST London/Sydney serta Tromsø untuk seluruh metode.
-- [ ] Dokumentasi akurasi Inggris dan README Inggris.
+- [x] Dokumentasi akurasi Inggris dan README Inggris.
+- [x] `go build ./...`, `go vet ./...`, dan `go test ./...` lulus setelah stabilisasi.
+- [x] Tolak argumen posisional tak terduga dengan pesan CLI yang jelas.
 
 **Open items — belum diputuskan tanpa data resmi**
 
