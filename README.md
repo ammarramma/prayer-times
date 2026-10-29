@@ -10,7 +10,7 @@ Aplikasi waktu shalat berbasis Go yang mendukung kota di seluruh dunia melalui k
 - Metode kalkulasi: Kemenag RI (Fajr 20°, Isha 18°), MWL, Umm al-Qura, Egyptian, Karachi, ISNA, Singapore, Dubai, Moonsighting Committee, Kuwait, Qatar, dan UOIF.
 - Madhab Asr: Shafii (default) atau Hanafi.
 - Aturan lintang tinggi: Middle of the Night, Seventh of the Night, Twilight Angle.
-- Ihtiyati khusus Kemenag: default +2 menit untuk Subuh, Dzuhur, Ashar, Maghrib, Isya, dan −2 menit untuk Terbit. Untuk metode lain tidak ada koreksi ihtiyati dari aplikasi.
+- Ihtiyati khusus Kemenag: default +2 menit untuk Subuh, Ashar, Maghrib, dan Isya; Dzuhur mendapat +3 menit (ihtiyati dasar +1), sedangkan Terbit dikurangi 2 menit. Untuk metode lain tidak ada koreksi ihtiyati dari aplikasi.
 - Imsak opsional dihitung 10 menit sebelum Subuh.
 - Waktu yang memiliki detik dibulatkan ke atas ke menit berikutnya.
 

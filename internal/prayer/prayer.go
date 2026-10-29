@@ -200,10 +200,14 @@ func Calculate(location Location, date time.Time, options Options) (PrayerTimes,
 		return ceilToMinute(t.In(tz)).Add(time.Duration(methodMinutes+ihtiyatiMinutes) * time.Minute)
 	}
 	adjustments := params.MethodAdjustments
+	dhuhrIhtiyati := correction
+	if options.Method == MethodKemenag && correction > 0 {
+		dhuhrIhtiyati++
+	}
 	result := PrayerTimes{
 		Fajr:            adjusted(fajr, adjustments.FajrAdj, correction),
 		Sunrise:         adjusted(sunrise, adjustments.SunriseAdj, -correction),
-		Dhuhr:           adjusted(transit, adjustments.DhuhrAdj, correction),
+		Dhuhr:           adjusted(transit, adjustments.DhuhrAdj, dhuhrIhtiyati),
 		Asr:             adjusted(asr, adjustments.AsrAdj, correction),
 		Maghrib:         adjusted(sunset, adjustments.MaghribAdj, correction),
 		Isha:            adjusted(isha, adjustments.IshaAdj, correction),

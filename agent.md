@@ -14,7 +14,7 @@ Aplikasi jadwal waktu shalat worldwide yang mendukung kota mana pun dengan koord
 - **Lokasi Default**: Lhokseumawe, Aceh (5.1801, 97.1406; `Asia/Jakarta`); nama, koordinat, dan timezone lain diberikan melalui config/flag.
 - `internal/prayer.Location` memakai timezone IANA, bukan timezone mesin.
 - **Metode**: Kemenag (Fajr 20°, Isha 18°, default), MWL, Umm al-Qura, Egyptian, Karachi, ISNA, Singapore, Dubai, Moonsighting Committee, Kuwait, Qatar, UOIF.
-- **Ihtiyati Kemenag**: default +2 menit untuk Subuh, Dzuhur, Ashar, Maghrib, Isya; Terbit dikurangi 2 menit. Imsak opsional adalah Subuh −10 menit. Metode lain tidak mendapat koreksi ihtiyati aplikasi.
+- **Ihtiyati Kemenag**: default +2 menit untuk Subuh, Ashar, Maghrib, dan Isya; Dzuhur memakai ihtiyati dasar +1 menit (total +3 menit); Terbit dikurangi 2 menit. Imsak opsional adalah Subuh −10 menit. Metode lain tidak mendapat koreksi ihtiyati aplikasi.
 - Pembulatan waktu keluaran: detik/nanodetik lebih dari nol selalu dibulatkan naik ke menit berikutnya.
 - Madhab Asr: Shafii (default) atau Hanafi. Aturan lintang tinggi: Middle of the Night (default), Seventh of the Night, atau Twilight Angle.
 - Label presentasi berada di `internal/i18n` agar mendukung lokalisasi.

@@ -12,7 +12,7 @@
 - [x] Model Location dengan nama, lintang, bujur, dan timezone IANA; default Lhokseumawe (5.1801, 97.1406, Asia/Jakarta)
 - [x] Preset Kemenag (Fajr 20°, Isha 18°) serta MWL, Umm al-Qura, Egyptian, Karachi, ISNA, Singapore, Dubai, Moonsighting Committee, Kuwait, Qatar, UOIF
 - [x] Madhab Shafii/Hanafi dan aturan lintang tinggi Middle of the Night, Seventh of the Night, Twilight Angle
-- [x] Ihtiyati configurable (default 2 menit hanya Kemenag): Subuh/Dzuhur/Ashar/Maghrib/Isya +2, Terbit -2; opsional Imsak = Subuh -10
+- [x] Ihtiyati configurable (default 2 menit hanya Kemenag): Subuh/Ashar/Maghrib/Isya +2, Dzuhur ihtiyati dasar +1 (total +3), Terbit -2; opsional Imsak = Subuh -10
 - [x] Pembulatan ke menit ke atas ketika detik atau nanodetik bukan nol
 - [x] Flag lokasi/metode/madhab/aturan lintang/ihitiyati/tanggal pada CLI; output menampilkan nama lokasi, metode, madhab, dan status koreksi
 - [x] Label output Bahasa Indonesia dipusatkan di `internal/i18n`
@@ -25,7 +25,8 @@
 **Catatan keputusan & akurasi**:
 - `adhango v0.1.0` menyediakan preset metode, madhab, high-latitude rule, dan adjustment per shalat. API kalkulasi membulatkan ke menit terdekat; implementasi domain memakai komponen waktu astronomy dan membulatkan **ke atas** setelah adjustment agar syarat Kemenag terpenuhi.
 - Kemenag menggunakan Fajr 20° dan Isha 18°; ihtiyati manual ditambahkan hanya untuk metode Kemenag. Preset lain mempertahankan koreksi bawaan masing-masing, tanpa ihtiyati aplikasi.
-- Fixture jadwal Oktober 2026 bersumber dari tabel jadwal Lhokseumawe Tirto yang menyebut Bimas Islam/Kemenag sebagai sumber: [Tirto — jadwal Lhokseumawe](https://jadwal-sholat.tirto.id/kota-lhokseumawe). Situs resmi SIHAT bersifat dinamis; pembaca halaman tidak dapat mengambil datanya secara langsung. Fixture per tanggal diverifikasi terhadap sumber publik tersebut dengan toleransi 1 menit.
+- Fixture jadwal Oktober 2026 bersumber dari tabel jadwal Lhokseumawe Tirto yang menyebut Bimas Islam/Kemenag sebagai sumber: [Tirto — jadwal Lhokseumawe](https://jadwal-sholat.tirto.id/kota-lhokseumawe). Situs resmi SIHAT bersifat dinamis; pembaca halaman tidak dapat mengambil datanya secara langsung. Fixture Subuh/Ashar/Maghrib/Isya memakai toleransi ±1 menit; Dzuhur wajib tepat (toleransi 0).
+- Setelah koreksi ihtiyati Dzuhur menjadi dasar +1 menit, selisih terhadap fixture untuk Subuh/Ashar/Maghrib/Isya adalah: 2026-10-01 = 0/0/0/0 menit; 2026-10-16 = 0/−1/0/0 menit; 2026-10-28 = 0/0/−1/0 menit. Urutan kolom: Subuh/Ashar/Maghrib/Isya. Rumus Maghrib tidak diubah; selisih −1 menit pada 2026-10-28 tetap dicatat menunggu data jadwal resmi yang lebih kuat. Terbit tidak tercakup fixture ini, sehingga tidak ada selisih Terbit yang dapat dilaporkan atau dasar untuk mengubah rumusnya.
 - `adhango` tidak mempertahankan timezone input untuk hasil astronomi; tanggal kalender lokal dipakai sebagai tanggal Gregorian setempat, dan hasil dikonversi ke timezone lokasi sebelum pembulatan waktu sipil.
 
 ---

@@ -63,7 +63,11 @@ func TestKemenagLhokseumaweAgainstOfficialSchedule(t *testing.T) {
 				actualMinute := pair.actual.Hour()*60 + pair.actual.Minute()
 				wantMinute := want.Hour()*60 + want.Minute()
 				delta := actualMinute - wantMinute
-				if delta < -1 || delta > 1 {
+				tolerance := 1
+				if pair.name == "Dzuhur" {
+					tolerance = 0
+				}
+				if delta < -tolerance || delta > tolerance {
 					t.Errorf("%s = %s, jadwal Kemenag %s (selisih %d menit)", pair.name, pair.actual.Format("15:04"), pair.expected, delta)
 				}
 			}
@@ -105,7 +109,7 @@ func TestIhtiyatiOnlyForKemenag(t *testing.T) {
 	}{
 		{"Subuh", kemenag.Fajr, withoutIhtiyati.Fajr, 2 * time.Minute},
 		{"Terbit", kemenag.Sunrise, withoutIhtiyati.Sunrise, -2 * time.Minute},
-		{"Dzuhur", kemenag.Dhuhr, withoutIhtiyati.Dhuhr, 2 * time.Minute},
+		{"Dzuhur", kemenag.Dhuhr, withoutIhtiyati.Dhuhr, 3 * time.Minute},
 		{"Ashar", kemenag.Asr, withoutIhtiyati.Asr, 2 * time.Minute},
 		{"Maghrib", kemenag.Maghrib, withoutIhtiyati.Maghrib, 2 * time.Minute},
 		{"Isya", kemenag.Isha, withoutIhtiyati.Isha, 2 * time.Minute},
