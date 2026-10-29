@@ -137,7 +137,8 @@
 
 **Catatan keputusan & keterbatasan**:
 - Tidak ada perintah push, pembuatan tag, `gh release`, atau pengiriman lain yang dijalankan. Arsip lokal uji `v0.1.0-test` dihapus sebelum commit.
-- `sha256sums=('SKIP')` sengaja sementara; setelah tag v0.1.0 tersedia di GitHub, jalankan `updpkgsums` dan commit pembaruan PKGBUILD/.SRCINFO.
+- `sha256sums=('SKIP')` sengaja sementara dengan komentar di PKGBUILD; setelah tag v0.1.0 tersedia di GitHub, jalankan `updpkgsums` dan commit pembaruan PKGBUILD/.SRCINFO.
+- Artefak `digest.txt` dan `prayer-times-tui-0.1.0.tar.gz` dihapus dari tracking lewat `git rm --cached`; tarball build lokal dihapus dari disk, sementara `digest.txt` tetap ada di disk. Keduanya dan `.cli-integration-*/` diabaikan oleh `.gitignore`.
 - PKGBUILD lokal diuji terhadap tarball sementara `prayer-times-0.1.0.tar.gz` di `/tmp`, dibuat dari `git archive HEAD` ditambah perubahan working tree yang diperlukan untuk menyamakan `main.go` dan TUI. URL file lokal hanya dipakai pada salinan PKGBUILD sementara; PKGBUILD root tetap memakai URL tag GitHub. `makepkg -f --noconfirm` lulus untuk x86_64 dan menjalankan `go test ./...` pada tahap check.
 - `namcap` belum terpasang sehingga pemeriksaan PKGBUILD/paket dilewati; jalankan manual ketika tersedia.
 - Placeholder gambar README merujuk ke `docs/screenshot.png`; screenshot asli belum disediakan dan tidak dibuat palsu.

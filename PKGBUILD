@@ -1,14 +1,15 @@
 pkgname=prayer-times-tui
 pkgver=0.1.0
 pkgrel=1
-pkgdesc='Jadwal waktu shalat untuk kota di seluruh dunia dengan TUI terminal'
+pkgdesc='Prayer times for cities worldwide in a terminal UI'
 arch=('x86_64' 'aarch64')
 url='https://github.com/ammarramma/prayer-times'
 license=('MIT')
 depends=('glibc')
 makedepends=('go')
 source=("$pkgname-$pkgver.tar.gz::https://github.com/ammarramma/prayer-times/archive/refs/tags/v$pkgver.tar.gz")
-sha256sums=('68f37eb08a5730a9340bded3107a9948e0251904de9e408b234db321dfaaed56')
+# Fill this with `updpkgsums` after the v0.1.0 tag is available on GitHub.
+sha256sums=('SKIP')
 
 prepare() {
   cd "$srcdir/prayer-times-$pkgver"
