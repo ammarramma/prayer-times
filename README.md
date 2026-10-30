@@ -4,13 +4,35 @@ A worldwide prayer schedule for the terminal, written in Go with Bubble Tea and 
 
 The default location is Lhokseumawe, Aceh (`5.1801, 97.1406`, `Asia/Jakarta`). When no method is explicitly configured, Indonesian time zones use Kemenag and other locations use MWL. An existing config method or `-method` flag takes precedence.
 
+<!-- Screenshot: docs/screenshot.png is coming soon; no image is embedded yet. -->
+
 ## Install
 
-Install the latest Go version:
+Install with Go:
 
 ```bash
 go install github.com/ammarramma/prayer-times@latest
 ```
+
+Prebuilt Linux binaries for amd64 and arm64 are attached to every [GitHub release](https://github.com/ammarramma/prayer-times/releases) together with a `SHA256SUMS` file. Download the archive for your architecture, verify it, and extract it:
+
+```bash
+curl -LO https://github.com/ammarramma/prayer-times/releases/latest/download/prayer-times_v0.1.0_linux_amd64.tar.gz
+curl -LO https://github.com/ammarramma/prayer-times/releases/latest/download/SHA256SUMS
+sha256sum --check --ignore-missing SHA256SUMS
+tar -xzf prayer-times_v0.1.0_linux_amd64.tar.gz
+./prayer-times -version
+```
+
+On Arch Linux, clone the repository and build the PKGBUILD it ships with:
+
+```bash
+git clone https://github.com/ammarramma/prayer-times.git
+cd prayer-times
+makepkg -si
+```
+
+An AUR package is coming soon. Until it is published, the PKGBUILD in the repository is the supported Arch install path.
 
 You can also run it from a source checkout with `go run .`.
 
