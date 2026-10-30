@@ -33,6 +33,12 @@ The Kemenag profile's offset tuple is the normal default ihtiyati result. Settin
 
 Additional tests cover the London and Sydney DST transitions and calculation robustness for Tromsø on 2026-06-21 and 2026-12-21 across all methods. These tests verify time-zone transitions, ordering, valid results or returned errors, not local authority accuracy.
 
+## High-latitude default
+
+When no high-latitude rule is configured explicitly, the application selects `seventh_of_the_night` for locations whose absolute latitude exceeds 48° and `middle_of_the_night` everywhere else. Beyond that latitude the sun can miss the Fajr and Isha twilight angles for weeks at a time, and the middle-of-the-night bound then places the night prayers far from actual twilight; the seventh-of-the-night portion keeps those windows shorter. `-high-latitude` or `options.high_latitude_rule` overrides the default, and `-set-config` stores the resolved rule explicitly. An empty rule is the marker for "not chosen by the user", which is why the resolution happens at calculation time from the location latitude.
+
+For London (51.5072°N) on 2026-06-21 the default gives Isha 63 minutes after Maghrib and Sunrise 64 minutes after Fajr; `TestLondonSummerDefaultHighLatitudeRule` asserts both are under 2 hours 30 minutes. The regression snapshot in `internal/prayer/testdata/golden.json` was regenerated for London on both stored dates only, and only Fajr and Isha moved. Entries for Lhokseumawe, Jakarta, Makkah, Tokyo, and Sydney are byte-identical, so the default for lower latitudes still resolves to middle of the night.
+
 ## Known differences and open data request
 
 Unofficial observations for Lhokseumawe on 2026-10-29 (not test fixtures): an Android application reported Imsak 04:50, Fajr 05:00, Sunrise 06:17, Dhuha 06:41, Dhuhr 12:19, Asr 15:38, Maghrib 18:17, and Isha 19:27. Google with “Kemenag Jakarta Pusat” as its basis and no ihtiyati reported Fajr 04:58, Sunrise 06:17, Dhuhr 12:15, Asr 15:36, Maghrib 18:14, and Isha 19:24. This project produced Sunrise 06:15 and Maghrib 18:16. These are observations only; no source is asserted for them and they are not fixtures.

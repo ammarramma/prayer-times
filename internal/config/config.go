@@ -94,7 +94,6 @@ func mergeDefaults(cfg *Config) {
 	if cfg.Options.Madhab == "" {
 		cfg.Options.Madhab = defaults.Options.Madhab
 	}
-	if cfg.Options.HighLatitudeRule == "" {
-		cfg.Options.HighLatitudeRule = defaults.Options.HighLatitudeRule
-	}
+	// An unset high-latitude rule stays empty: the caller resolves it from the
+	// location latitude unless the user chose a rule explicitly.
 }

@@ -2,7 +2,7 @@
 
 A worldwide prayer schedule for the terminal, written in Go with Bubble Tea and Lipgloss. Enter a location's name, coordinates, and IANA time zone to calculate schedules with one of 12 calculation methods. The interface and CLI output are English by default; Indonesian is available with `-lang id`.
 
-The default location is Lhokseumawe, Aceh (`5.1801, 97.1406`, `Asia/Jakarta`). When no method is explicitly configured, Indonesian time zones use Kemenag and other locations use MWL. An existing config method or `-method` flag takes precedence.
+The default location is Lhokseumawe, Aceh (`5.1801, 97.1406`, `Asia/Jakarta`). When no method is explicitly configured, Indonesian time zones use Kemenag and other locations use MWL. An existing config method or `-method` flag takes precedence. When no high-latitude rule is explicitly configured, locations beyond 48° latitude use seventh of the night and all others use middle of the night.
 
 <!-- Screenshot: docs/screenshot.png is coming soon; no image is embedded yet. -->
 
@@ -68,7 +68,7 @@ Use `-lang id` for Indonesian CLI and TUI labels. The default language is Englis
 | `-tz` | `Asia/Jakarta` | IANA time zone, such as `Europe/London` or `Asia/Riyadh` |
 | `-method` | Kemenag for Indonesia time zones; MWL otherwise | One of the 12 methods listed below |
 | `-madhab` | `shafii` | Asr school: `shafii` or `hanafi` |
-| `-high-latitude` | `middle_of_the_night` | `middle_of_the_night`, `seventh_of_the_night`, or `twilight_angle` |
+| `-high-latitude` | `seventh_of_the_night` beyond 48° latitude, `middle_of_the_night` otherwise | `middle_of_the_night`, `seventh_of_the_night`, or `twilight_angle` |
 | `-ihtiyati` | `2` for Kemenag; `0` otherwise | Kemenag safety margin in minutes; Dhuhr uses one additional minute and Sunrise subtracts the base margin |
 | `-imsak` | `false` | Include Imsak, calculated as Fajr minus 10 minutes |
 | `-fullscreen` | `false` | Use the alternate screen and center the TUI |
@@ -96,7 +96,7 @@ The JSON config stores `location`, `options`, and `language`. Flags override mat
   "options": {
     "method": "mwl",
     "madhab": "shafii",
-    "high_latitude_rule": "middle_of_the_night",
+    "high_latitude_rule": "seventh_of_the_night",
     "ihtiyati_minutes": 0,
     "include_imsak": false,
     "offsets": {
@@ -113,6 +113,8 @@ The JSON config stores `location`, `options`, and `language`. Flags override mat
 ```
 
 Each manual offset is in minutes and must be between −30 and +30. It is added after the selected method's built-in offsets and applies to Kemenag too. The legacy `ihtiyati_minutes` setting continues to control Kemenag's base safety margin.
+
+The London example above stores `seventh_of_the_night` because that is the resolved rule for a location beyond 48° latitude. Omit `options.high_latitude_rule` to let the latitude decide again; `-set-config` writes the resolved rule explicitly.
 
 Save the currently resolved settings (including the method selected from the time zone when not explicitly supplied) with:
 

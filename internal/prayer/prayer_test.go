@@ -149,6 +149,22 @@ func TestHighLatitudeOsloSummerDoesNotCrash(t *testing.T) {
 	}
 }
 
+func TestLondonSummerDefaultHighLatitudeRule(t *testing.T) {
+	london := Location{Name: "London", Latitude: 51.5072, Longitude: -0.1276, Timezone: "Europe/London"}
+	options := DefaultOptions(MethodMWL)
+	if options.HighLatitudeRule != "" {
+		t.Fatalf("default options should leave the high-latitude rule unset, got %q", options.HighLatitudeRule)
+	}
+	result := mustCalculate(t, london, localDate(t, london.Timezone, "2026-06-21"), options)
+	const limit = 150 * time.Minute
+	if gap := result.Isha.Sub(result.Maghrib); gap >= limit {
+		t.Errorf("Isya - Maghrib = %s, want less than %s", gap, limit)
+	}
+	if gap := result.Sunrise.Sub(result.Fajr); gap >= limit {
+		t.Errorf("Terbit - Subuh = %s, want less than %s", gap, limit)
+	}
+}
+
 func TestRoundingAndImsak(t *testing.T) {
 	base := time.Date(2026, time.January, 1, 12, 0, 1, 0, time.UTC)
 	if got := ceilToMinute(base); !got.Equal(time.Date(2026, time.January, 1, 12, 1, 0, 0, time.UTC)) {

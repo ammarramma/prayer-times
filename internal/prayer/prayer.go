@@ -85,6 +85,7 @@ func DefaultLocation() Location {
 }
 
 // DefaultOptions returns sensible settings for the requested calculation method.
+// The high-latitude rule is left unset so Calculate can pick it from latitude.
 func DefaultOptions(method Method) Options {
 	if method == "" {
 		method = MethodKemenag
@@ -93,7 +94,18 @@ func DefaultOptions(method Method) Options {
 	if method == MethodKemenag {
 		minutes = 2
 	}
-	return Options{Method: method, Madhab: MadhabShafii, HighLatitudeRule: MiddleOfTheNight, IhtiyatiMinutes: minutes}
+	return Options{Method: method, Madhab: MadhabShafii, IhtiyatiMinutes: minutes}
+}
+
+// DefaultHighLatitudeRule chooses the night rule for a location when the user
+// has not selected one. Beyond 48 degrees the sun skips the Fajr and Isha
+// twilight angles for part of the year, so the seventh-of-the-night rule keeps
+// Fajr and Isha within roughly two and a half hours of Sunrise and Maghrib.
+func DefaultHighLatitudeRule(latitude float64) HighLatitudeRule {
+	if math.Abs(latitude) > 48 {
+		return SeventhOfTheNight
+	}
+	return MiddleOfTheNight
 }
 
 // DefaultMethod chooses the regional default for an unset method.
@@ -134,7 +146,7 @@ func Calculate(location Location, date time.Time, options Options) (PrayerTimes,
 		options.Madhab = MadhabShafii
 	}
 	if options.HighLatitudeRule == "" {
-		options.HighLatitudeRule = MiddleOfTheNight
+		options.HighLatitudeRule = DefaultHighLatitudeRule(location.Latitude)
 	}
 	if options.IhtiyatiMinutes < 0 || options.IhtiyatiMinutes > 60 {
 		return PrayerTimes{}, fmt.Errorf("safety margin must be between 0 and 60 minutes")

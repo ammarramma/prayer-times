@@ -88,6 +88,9 @@ func main() {
 	if *highLatitude != "" {
 		cfg.Options.HighLatitudeRule = prayer.HighLatitudeRule(*highLatitude)
 	}
+	if cfg.Options.HighLatitudeRule == "" {
+		cfg.Options.HighLatitudeRule = prayer.DefaultHighLatitudeRule(cfg.Location.Latitude)
+	}
 	if *ihtiyati >= 0 {
 		cfg.Options.IhtiyatiMinutes = *ihtiyati
 	}
