@@ -1,6 +1,6 @@
 # Progress Tracking - Prayer Times TUI
 
-**Status Keseluruhan**: ✅ Stabilisasi global dan dokumentasi akurasi selesai (2026-10-29), ditambah penyempurnaan rilis dan default lintang tinggi (2026-10-30). Fase terdahulu dipertahankan sebagai riwayat; lihat bagian stabilisasi global, penyempurnaan rilis, dan open items.
+**Status Keseluruhan**: ✅ Stabilisasi global dan dokumentasi akurasi selesai (2026-10-29), ditambah penyempurnaan rilis, default lintang tinggi, dan notifikasi desktop (2026-10-30). Fase terdahulu dipertahankan sebagai riwayat; lihat bagian stabilisasi global, penyempurnaan rilis, notifikasi desktop, dan open items.
 
 ---
 
@@ -163,6 +163,30 @@
 - Golden London berubah pada kedua tanggal dan hanya pada Fajr/Isya, sedangkan Lhokseumawe, Jakarta, Makkah, Tokyo, dan Sydney identik byte demi byte. Karena hanya London yang berubah, langkah opsional tidak perlu dibatalkan.
 - Default lintang tinggi diletakkan di domain (`DefaultHighLatitudeRule` dipanggil `Calculate`) agar pemanggil langsung dan golden memakai perilaku yang sama.
 - Test London 2026-06-21 memastikan Isya−Maghrib dan Terbit−Subuh masing-masing di bawah 2 jam 30 menit dengan opsi default.
+
+---
+
+---
+
+## Notifikasi desktop (2026-10-30)
+
+### Checklist
+- [x] Domain `internal/notify`: `Events` (lima shalat hari ini + Subuh besok), `Due` (lead/grace window, dedup state, pilih event terbaru), `Settings.Validate`, serta test sintetis dan kalkulasi nyata (London DST, Oslo musim panas)
+- [x] `notifications` pada config Viper dengan default lima shalat, lead 0, dan grace 5 menit; file lama tetap memakai default tersebut
+- [x] Label notifikasi `en`/`id` di `internal/i18n` lewat `Locale.Notification` dan `Locale.PrayerLabel`
+- [x] Adapter D-Bus `org.freedesktop.Notifications` memakai `github.com/godbus/dbus/v5` dengan koneksi privat ke session bus
+- [x] Mode `-notify-once` plus `-notify-prayers`, `-notify-lead`, `-notify-grace`, dan `-dry-run`; `-set-config` menyimpan pengaturan notifikasi
+- [x] State dedup di `$XDG_STATE_HOME/prayer-times/notified.json` (default `~/.local/state`), tulisan atomik 0600 dan direktori 0700
+- [x] Unit `contrib/systemd/user/prayer-times-notify.service` (oneshot) dan `.timer` per menit dengan `Persistent=true`
+- [x] README Inggris: bagian Desktop notifications, flag baru, dan blok `notifications` pada contoh config
+- [x] `gofmt -l .` kosong, `go build ./...`, `go vet ./...`, `go test ./... -count=1` lulus setelah tiap langkah
+
+**Catatan keputusan**:
+- Notifikasi memakai D-Bus langsung tanpa fallback `notify-send`, sehingga tidak ada dependency eksternal tambahan dan perilaku sama di X11 maupun Wayland.
+- Kegagalan bus atau daemon hanya menjadi peringatan dan exit 0 agar timer systemd tidak masuk status gagal; state juga tidak ditulis bila pengiriman gagal.
+- Hanya event terbaru yang jatuh tempo dikirim, sehingga suspend panjang tidak menghasilkan tumpukan notifikasi lama.
+- `PKGBUILD` dan `.SRCINFO` tidak diubah; unit dipasang manual lewat dokumentasi README. `systemd-analyze verify` hanya melaporkan `/usr/bin/prayer-times` belum ada di lingkungan ini, bukan kesalahan sintaks unit.
+- Tromsø pada 21 Juni tidak bisa dipakai sebagai fixture notifikasi karena kalkulasi mengembalikan NaN saat matahari tidak terbenam; test domain memakai Oslo yang masih memiliki terbenam dan tetap > 48° lintang.
 
 ---
 
