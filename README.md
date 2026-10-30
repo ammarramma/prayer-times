@@ -17,12 +17,15 @@ go install github.com/ammarramma/prayer-times@latest
 Prebuilt Linux binaries for amd64 and arm64 are attached to every [GitHub release](https://github.com/ammarramma/prayer-times/releases) together with a `SHA256SUMS` file. Download the archive for your architecture, verify it, and extract it:
 
 ```bash
-curl -LO https://github.com/ammarramma/prayer-times/releases/latest/download/prayer-times_v0.1.0_linux_amd64.tar.gz
-curl -LO https://github.com/ammarramma/prayer-times/releases/latest/download/SHA256SUMS
+version=v0.1.1
+curl -LO "https://github.com/ammarramma/prayer-times/releases/latest/download/prayer-times_${version}_linux_amd64.tar.gz"
+curl -LO "https://github.com/ammarramma/prayer-times/releases/latest/download/SHA256SUMS"
 sha256sum --check --ignore-missing SHA256SUMS
-tar -xzf prayer-times_v0.1.0_linux_amd64.tar.gz
+tar -xzf "prayer-times_${version}_linux_amd64.tar.gz"
 ./prayer-times -version
 ```
+
+Use the `arm64` archive instead of `amd64` on ARM machines.
 
 On Arch Linux, clone the repository and build the PKGBUILD it ships with:
 

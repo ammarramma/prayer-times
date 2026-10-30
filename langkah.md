@@ -1,6 +1,6 @@
 # Progress Tracking - Prayer Times TUI
 
-**Status Keseluruhan**: ✅ Stabilisasi global dan dokumentasi akurasi selesai (2026-10-29), ditambah penyempurnaan rilis, default lintang tinggi, dan notifikasi desktop (2026-10-30). Fase terdahulu dipertahankan sebagai riwayat; lihat bagian stabilisasi global, penyempurnaan rilis, notifikasi desktop, dan open items.
+**Status Keseluruhan**: ✅ Stabilisasi global dan dokumentasi akurasi selesai (2026-10-29), ditambah penyempurnaan rilis, default lintang tinggi, notifikasi desktop, dan persiapan rilis v0.1.1 (2026-10-30). Fase terdahulu dipertahankan sebagai riwayat; lihat bagian stabilisasi global, penyempurnaan rilis, notifikasi desktop, rilis v0.1.1, dan open items.
 
 ---
 
@@ -187,6 +187,25 @@
 - Hanya event terbaru yang jatuh tempo dikirim, sehingga suspend panjang tidak menghasilkan tumpukan notifikasi lama.
 - `PKGBUILD` dan `.SRCINFO` tidak diubah; unit dipasang manual lewat dokumentasi README. `systemd-analyze verify` hanya melaporkan `/usr/bin/prayer-times` belum ada di lingkungan ini, bukan kesalahan sintaks unit.
 - Tromsø pada 21 Juni tidak bisa dipakai sebagai fixture notifikasi karena kalkulasi mengembalikan NaN saat matahari tidak terbenam; test domain memakai Oslo yang masih memiliki terbenam dan tetap > 48° lintang.
+
+---
+
+## Rilis v0.1.1 (2026-10-30)
+
+### Checklist
+- [x] `CHANGELOG.md` dengan entri 0.1.0 dan 0.1.1 (Added/Changed/Fixed)
+- [x] README: contoh unduhan memakai `version=v0.1.1` dan catatan arsip arm64, tidak lagi mengunci v0.1.0
+- [x] Arsip lokal v0.1.1 amd64/arm64 + `SHA256SUMS` dibuat lewat `scripts/build-release.sh`; `-version` mencetak `v0.1.1`, binary statis x86-64, dan jadwal 2026-10-29 cocok dengan fixture
+- [x] `gofmt -l .` kosong, `go build ./...`, `go vet ./...`, `go test ./... -count=1` lulus
+- [ ] Tag `v0.1.1`, push branch dan tag, GitHub Release beserta unggahan arsip — dilakukan pemilik repo
+- [ ] `PKGBUILD` (`pkgver=0.1.1`, checksum nyata) dan `.SRCINFO` — dilakukan pemilik repo agar prosesnya dipahami; agent tidak menyentuhnya
+- [ ] Submit AUR — menunggu akun AUR
+
+**Catatan keputusan**:
+- Checksum di `dist/SHA256SUMS` lokal hanya untuk verifikasi; checksum PKGBUILD harus diambil dari tarball tag GitHub (`updpkgsums`) karena arsip rilis memuat metadata tar yang tidak dijamin identik antar build.
+- Arsip sebaiknya dibangun ulang dari checkout bertag yang bersih sebelum diunggah; arsip lokal saat ini dipakai untuk membuktikan skrip rilis dan perilaku binary.
+- Completion shell dan subcommand (`-t`, `-tC`, `--tui`) ditunda ke v0.2.0 bersama adopsi cobra/pflag dan shim kompatibilitas `-nama`.
+- Hanya `PKGBUILD` dan `.SRCINFO` yang tersisa untuk rilis paket Arch; keduanya diperbarui manual oleh pemilik repo.
 
 ---
 
