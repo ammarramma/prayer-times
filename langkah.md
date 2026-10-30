@@ -1,6 +1,6 @@
 # Progress Tracking - Prayer Times TUI
 
-**Status Keseluruhan**: ✅ Stabilisasi global dan dokumentasi akurasi selesai (2026-10-29). Fase terdahulu dipertahankan sebagai riwayat; lihat bagian stabilisasi global dan open items.
+**Status Keseluruhan**: ✅ Stabilisasi global dan dokumentasi akurasi selesai (2026-10-29), ditambah penyempurnaan rilis dan default lintang tinggi (2026-10-30). Fase terdahulu dipertahankan sebagai riwayat; lihat bagian stabilisasi global, penyempurnaan rilis, dan open items.
 
 ---
 
@@ -141,9 +141,28 @@
 - Artefak `digest.txt` dan `prayer-times-tui-0.1.0.tar.gz` dihapus dari tracking lewat `git rm --cached`; tarball build lokal dihapus dari disk, sementara `digest.txt` tetap ada di disk. Keduanya dan `.cli-integration-*/` diabaikan oleh `.gitignore`.
 - PKGBUILD lokal diuji terhadap tarball sementara `prayer-times-0.1.0.tar.gz` di `/tmp`, dibuat dari `git archive HEAD` ditambah perubahan working tree yang diperlukan untuk menyamakan `main.go` dan TUI. URL file lokal hanya dipakai pada salinan PKGBUILD sementara; PKGBUILD root tetap memakai URL tag GitHub. `makepkg -f --noconfirm` lulus untuk x86_64 dan menjalankan `go test ./...` pada tahap check.
 - `namcap` belum terpasang sehingga pemeriksaan PKGBUILD/paket dilewati; jalankan manual ketika tersedia.
-- Placeholder gambar README merujuk ke `docs/screenshot.png`; screenshot asli belum disediakan dan tidak dibuat palsu.
+- Placeholder gambar README kini berupa komentar HTML yang menyebut `docs/screenshot.png` menyusul; screenshot asli belum disediakan dan tidak dibuat palsu.
 - Versi Go repo Arch memenuhi syarat saat dicek; `go.mod` tidak diturunkan.
 - Binary lintas kompilasi dibuat untuk Linux amd64 dan arm64 dengan CGO dinonaktifkan. `dist/` dihapus setelah uji lokal agar artefak tidak ikut commit.
+
+---
+
+## Penyempurnaan rilis (2026-10-30)
+
+### Checklist
+- [x] README Inggris: bagian Install memuat `go install`, arsip rilis Linux amd64/arm64 beserta `SHA256SUMS`, Arch via clone lalu `makepkg -si` dengan PKGBUILD repo, dan status AUR; kalimat "Install the latest Go version:" menjadi "Install with Go:"; placeholder screenshot berupa komentar HTML agar tidak ada tautan gambar rusak
+- [x] `docs/accuracy.md` diperiksa dengan `file`, pencarian byte NUL, dan validasi UTF-8: berkas sudah teks UTF-8 biasa tanpa NUL sehingga tidak perlu ditulis ulang
+- [x] `main_test.go`: helper `runCLIResult` yang mengembalikan exit code dan output, plus test argumen posisional `.`, `-version` satu baris, `-lang id`, dan `-lang fr`
+- [x] `main.go`: impor `_ "time/tzdata"`; `-version` memakai versi build info bila ldflags masih `dev`; doc comment `DefaultMethod` dipisahkan dari akhir `DefaultOptions`
+- [x] `.github/workflows/ci.yml` pada push dan pull_request: `go build`, `go vet`, `go test ./...` dengan `actions/setup-go` (`go-version-file: go.mod`), tanpa secret dan tanpa langkah deploy
+- [x] Default aturan lintang tinggi dari lintang: `seventh_of_the_night` bila |lintang| > 48 dan pengguna tidak memilih eksplisit, selain itu `middle_of_the_night`; test London 2026-06-21; README dan `docs/accuracy.md` diperbarui
+- [x] `gofmt -l .` kosong, `go build ./...`, `go vet ./...`, `go test ./... -count=1` lulus setelah tiap langkah
+
+**Catatan keputusan**:
+- Keeksplisitan aturan lintang tinggi dilacak dengan nilai aturan kosong (belum dipilih) vs non-kosong (dipilih), sejalan dengan `Method` kosong dan tanpa flag tambahan. `DefaultOptions` tidak lagi mengisi aturan, `config.mergeDefaults` membiarkannya kosong, dan `main.go` menyimpan hasil resolusi saat `-set-config`. Flag `-high-latitude` atau `options.high_latitude_rule` yang terisi selalu menang.
+- Golden London berubah pada kedua tanggal dan hanya pada Fajr/Isya, sedangkan Lhokseumawe, Jakarta, Makkah, Tokyo, dan Sydney identik byte demi byte. Karena hanya London yang berubah, langkah opsional tidak perlu dibatalkan.
+- Default lintang tinggi diletakkan di domain (`DefaultHighLatitudeRule` dipanggil `Calculate`) agar pemanggil langsung dan golden memakai perilaku yang sama.
+- Test London 2026-06-21 memastikan Isya−Maghrib dan Terbit−Subuh masing-masing di bawah 2 jam 30 menit dengan opsi default.
 
 ---
 
@@ -155,4 +174,4 @@
 
 ---
 
-**Last Updated**: 2026-10-29
+**Last Updated**: 2026-10-30

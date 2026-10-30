@@ -16,7 +16,7 @@ Aplikasi jadwal waktu shalat global dengan koordinat dan timezone IANA. UI dan o
 - **Metode**: Kemenag (Fajr 20°, Isha 18°), MWL, Umm al-Qura, Egyptian, Karachi, ISNA, Singapore, Dubai, Moonsighting Committee, Kuwait, Qatar, UOIF. Default tak eksplisit: Kemenag untuk `Asia/Jakarta`, `Asia/Pontianak`, `Asia/Makassar`, `Asia/Jayapura`; MWL selainnya. Default lokasi Lhokseumawe tetap Kemenag.
 - **Ihtiyati Kemenag**: default +2 menit untuk Fajr, Asr, Maghrib, Isha; Dhuhr +3; Sunrise −2. Imsak opsional adalah Fajr −10 menit. `Options.Offsets` ditambahkan setelah preset untuk semua metode.
 - Pembulatan waktu keluaran: detik/nanodetik lebih dari nol selalu dibulatkan naik ke menit berikutnya.
-- Madhab Asr: Shafii (default) atau Hanafi. Aturan lintang tinggi: Middle of the Night (default), Seventh of the Night, atau Twilight Angle.
+- Madhab Asr: Shafii (default) atau Hanafi. Aturan lintang tinggi: Seventh of the Night (default bila |lintang| > 48 dan aturan tidak dipilih eksplisit), Middle of the Night (default lainnya), atau Twilight Angle. Aturan kosong menandai "belum dipilih" dan diselesaikan `Calculate` dari lintang.
 - `internal/i18n.Locale` mendukung English default dan Indonesian (`For("en"|"id")`).
 - Status NOW/NEXT dihitung di `internal/prayer` dari waktu yang ditampilkan; NOW berlangsung 15 menit. Sunrise bukan target status.
 
@@ -28,6 +28,8 @@ prayer-times/
 ├── main.go           # Entry point aplikasi dan flag versi
 ├── LICENSE           # Lisensi MIT
 ├── PKGBUILD          # Build package Arch Linux
+├── .github/
+│   └── workflows/ci.yml # CI: build, vet, dan test pada push/PR
 ├── scripts/
 │   └── build-release.sh # Build arsip binary rilis linux/amd64 dan linux/arm64
 ├── internal/
@@ -35,12 +37,12 @@ prayer-times/
 │   ├── tui/          # Bubble Tea components dan styling Lipgloss
 │   ├── i18n/         # String label per locale
 │   └── config/       # Struktur dan config JSON melalui Viper
-├── docs/accuracy.md  # Parameter profil, verifikasi, dan fixture
+├── docs/accuracy.md  # Parameter profil, verifikasi, fixture, dan default lintang tinggi
 ├── go.mod
 ├── go.sum
 └── .SRCINFO          # Metadata package Arch untuk AUR
 
-Dist rilis `dist/` dibuat oleh `scripts/build-release.sh` dan tidak disimpan di Git. `main.go` menyediakan flag `-version`; versi rilis di-inject melalui ldflags, sedangkan build lokal melaporkan `dev`.
+Dist rilis `dist/` dibuat oleh `scripts/build-release.sh` dan tidak disimpan di Git. `main.go` menyediakan flag `-version`: nilai ldflags dipakai lebih dulu, lalu versi modul dari `debug.ReadBuildInfo()` (dipakai `go install`), dan `dev` bila keduanya kosong. Binary mengimpor `time/tzdata` sehingga zona IANA tetap tersedia tanpa zoneinfo sistem.
 ```
 
 ## Prinsip Development
@@ -55,5 +57,6 @@ Dist rilis `dist/` dibuat oleh `scripts/build-release.sh` dan tidak disimpan di 
 - Model lemah bisa refer ke file ini untuk context proyek
 - Setiap fase harus verified working sebelum lanjut
 - Core domain murni berada di `internal/prayer`; wiring entry point tetap tipis.
+- Default lintang tinggi adalah keputusan domain (`DefaultHighLatitudeRule`), bukan hanya wiring CLI, supaya pemanggil `Calculate` langsung mendapat perilaku yang sama.
 - Fixture akurasi Indonesia harus mencatat sumber/toleransi yang benar-benar diketahui. Selisih tak terjelaskan tidak boleh ditambal dengan perubahan rumus; rekam di `langkah.md` dan `docs/accuracy.md`.
 - Snapshot golden menjaga baseline perhitungan dan bukan bukti akurasi. Metode non-Kemenag belum diverifikasi terhadap otoritas lokal.
