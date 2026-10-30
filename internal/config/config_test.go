@@ -3,8 +3,10 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 
+	"github.com/ammarramma/prayer-times/internal/notify"
 	"github.com/ammarramma/prayer-times/internal/prayer"
 )
 
@@ -13,7 +15,7 @@ func TestLoadMissingConfigUsesDefaults(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if cfg != Default() {
+	if !reflect.DeepEqual(cfg, Default()) {
 		t.Fatalf("Load missing = %#v, mau %#v", cfg, Default())
 	}
 }
@@ -23,6 +25,7 @@ func TestSaveAndLoadRoundTrip(t *testing.T) {
 	want := Config{
 		Location:       prayer.Location{Name: "London", Latitude: 51.5072, Longitude: -0.1276, Timezone: "Europe/London"},
 		Options:        prayer.Options{Method: prayer.MethodMWL, Madhab: prayer.MadhabHanafi, HighLatitudeRule: prayer.SeventhOfTheNight, IhtiyatiMinutes: 0, IncludeImsak: true},
+		Notifications:  notify.Settings{Enabled: true, Prayers: []prayer.PrayerName{prayer.Maghrib, prayer.Isha}, LeadMinutes: 5, GraceMinutes: 10},
 		Language:       "en",
 		MethodExplicit: true,
 	}
@@ -33,7 +36,7 @@ func TestSaveAndLoadRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got != want {
+	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("round trip = %#v, mau %#v", got, want)
 	}
 	info, err := os.Stat(path)
@@ -56,6 +59,20 @@ func TestLegacyConfigWithoutLanguageAndOffsetsLoads(t *testing.T) {
 	}
 	if cfg.Language != "en" || cfg.Options.Method != prayer.MethodMWL || cfg.Options.Offsets != (prayer.PrayerOffsets{}) {
 		t.Fatalf("legacy config merged to %#v", cfg)
+	}
+}
+
+func TestLegacyConfigKeepsNotificationDefaults(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "legacy.json")
+	if err := os.WriteFile(path, []byte(`{"location":{"name":"London","latitude":51.5072,"longitude":-0.1276,"timezone":"Europe/London"}}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := Load(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(cfg.Notifications, notify.DefaultSettings()) {
+		t.Fatalf("notifications = %#v, mau %#v", cfg.Notifications, notify.DefaultSettings())
 	}
 }
 

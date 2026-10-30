@@ -5,14 +5,17 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/ammarramma/prayer-times/internal/notify"
 	"github.com/ammarramma/prayer-times/internal/prayer"
 	"github.com/spf13/viper"
 )
 
-// Config stores the application location, calculation options, and locale.
+// Config stores the application location, calculation options, locale, and
+// notification settings.
 type Config struct {
 	Location       prayer.Location `json:"location" mapstructure:"location"`
 	Options        prayer.Options  `json:"options" mapstructure:"options"`
+	Notifications  notify.Settings `json:"notifications" mapstructure:"notifications"`
 	Language       string          `json:"language" mapstructure:"language"`
 	MethodExplicit bool            `json:"-" mapstructure:"-"`
 }
@@ -20,9 +23,10 @@ type Config struct {
 // Default returns the initial Kemenag configuration for Lhokseumawe.
 func Default() Config {
 	return Config{
-		Location: prayer.DefaultLocation(),
-		Options:  prayer.DefaultOptions(prayer.MethodKemenag),
-		Language: "en",
+		Location:      prayer.DefaultLocation(),
+		Options:       prayer.DefaultOptions(prayer.MethodKemenag),
+		Notifications: notify.DefaultSettings(),
+		Language:      "en",
 	}
 }
 
@@ -65,6 +69,7 @@ func Save(path string, cfg Config) error {
 	v.SetConfigType("json")
 	v.Set("location", cfg.Location)
 	v.Set("options", cfg.Options)
+	v.Set("notifications", cfg.Notifications)
 	v.Set("language", cfg.Language)
 	if err := v.WriteConfigAs(path); err != nil {
 		return fmt.Errorf("writing config %s: %w", path, err)
