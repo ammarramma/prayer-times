@@ -4,7 +4,9 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"runtime/debug"
 	"time"
+	_ "time/tzdata"
 
 	"github.com/ammarramma/prayer-times/internal/config"
 	"github.com/ammarramma/prayer-times/internal/i18n"
@@ -41,7 +43,7 @@ func main() {
 		os.Exit(2)
 	}
 	if *showVersion {
-		fmt.Println(version)
+		fmt.Println(resolvedVersion())
 		return
 	}
 
@@ -129,6 +131,22 @@ func main() {
 	if _, err := program.Run(); err != nil {
 		fail("TUI", err)
 	}
+}
+
+// resolvedVersion reports the ldflags version and falls back to the module
+// version recorded in the build info, which is what `go install` populates.
+func resolvedVersion() string {
+	if version != "dev" {
+		return version
+	}
+	info, ok := debug.ReadBuildInfo()
+	if !ok || info == nil {
+		return version
+	}
+	if buildVersion := info.Main.Version; buildVersion != "" && buildVersion != "(devel)" {
+		return buildVersion
+	}
+	return version
 }
 
 func flagWasSet(name string) bool {

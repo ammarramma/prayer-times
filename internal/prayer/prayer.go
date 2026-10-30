@@ -94,7 +94,9 @@ func DefaultOptions(method Method) Options {
 		minutes = 2
 	}
 	return Options{Method: method, Madhab: MadhabShafii, HighLatitudeRule: MiddleOfTheNight, IhtiyatiMinutes: minutes}
-} // DefaultMethod chooses the regional default for an unset method.
+}
+
+// DefaultMethod chooses the regional default for an unset method.
 func DefaultMethod(timezone string) Method {
 	switch timezone {
 	case "Asia/Jakarta", "Asia/Pontianak", "Asia/Makassar", "Asia/Jayapura":
