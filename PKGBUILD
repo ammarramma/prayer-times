@@ -1,5 +1,5 @@
 pkgname=prayer-times-tui
-pkgver=0.1.0
+pkgver=0.1.1
 pkgrel=1
 pkgdesc='Prayer times for cities worldwide in a terminal UI'
 arch=('x86_64' 'aarch64')
@@ -8,8 +8,7 @@ license=('MIT')
 depends=('glibc')
 makedepends=('go')
 source=("$pkgname-$pkgver.tar.gz::https://github.com/ammarramma/prayer-times/archive/refs/tags/v$pkgver.tar.gz")
-# Fill this with `updpkgsums` after the v0.1.0 tag is available on GitHub.
-sha256sums=('SKIP')
+sha256sums=('dd08c9cbc03a5d8a95d4a8738e1e6af48f472d858fc6e236b8866cd17a4c8939')
 
 prepare() {
   cd "$srcdir/prayer-times-$pkgver"
