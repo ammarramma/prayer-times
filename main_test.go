@@ -72,6 +72,51 @@ func TestCLISetConfigPersistsResolvedZoneMethod(t *testing.T) {
 	}
 }
 
+func TestCLIRejectsPositionalArguments(t *testing.T) {
+	binary, workspace := buildCLITestBinary(t)
+	configPath := filepath.Join(workspace, "unused.json")
+	code, output := runCLIResult(t, binary, "-config", configPath, "-date", "2026-10-29", ".")
+	if code != 2 {
+		t.Fatalf("exit code = %d, want 2\n%s", code, output)
+	}
+	if !strings.Contains(output, "unexpected positional") {
+		t.Fatalf("output should name the unexpected positional argument:\n%s", output)
+	}
+}
+
+func TestCLIVersionPrintsSingleLine(t *testing.T) {
+	binary, _ := buildCLITestBinary(t)
+	code, output := runCLIResult(t, binary, "-version")
+	if code != 0 {
+		t.Fatalf("exit code = %d, want 0\n%s", code, output)
+	}
+	lines := strings.Split(strings.TrimRight(output, "\n"), "\n")
+	if len(lines) != 1 || strings.TrimSpace(lines[0]) == "" {
+		t.Fatalf("-version should print one non-empty line, got %q", output)
+	}
+}
+
+func TestCLIIndonesianSchedule(t *testing.T) {
+	binary, workspace := buildCLITestBinary(t)
+	configPath := filepath.Join(workspace, "unused.json")
+	code, output := runCLIResult(t, binary, "-config", configPath, "-lang", "id", "-date", "2026-10-29")
+	if code != 0 {
+		t.Fatalf("exit code = %d, want 0\n%s", code, output)
+	}
+	if !strings.Contains(output, "JADWAL WAKTU SHALAT") {
+		t.Fatalf("-lang id should print the Indonesian title:\n%s", output)
+	}
+}
+
+func TestCLIRejectsUnknownLanguage(t *testing.T) {
+	binary, workspace := buildCLITestBinary(t)
+	configPath := filepath.Join(workspace, "unused.json")
+	code, output := runCLIResult(t, binary, "-config", configPath, "-lang", "fr", "-date", "2026-10-29")
+	if code != 2 {
+		t.Fatalf("exit code = %d, want 2\n%s", code, output)
+	}
+}
+
 func buildCLITestBinary(t *testing.T) (binary, workspace string) {
 	t.Helper()
 	workspace, err := os.MkdirTemp(".", ".cli-integration-")
@@ -94,6 +139,21 @@ func buildCLITestBinary(t *testing.T) (binary, workspace string) {
 		t.Fatalf("build CLI test binary: %v\n%s", err, output)
 	}
 	return binary, workspace
+}
+
+// runCLIResult runs the CLI and reports its exit code and combined output
+// instead of failing on a non-zero exit.
+func runCLIResult(t *testing.T, binary string, args ...string) (exitCode int, output string) {
+	t.Helper()
+	command := exec.Command(binary, args...)
+	combined, err := command.CombinedOutput()
+	if err != nil {
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			return exitErr.ExitCode(), string(combined)
+		}
+		t.Fatalf("run prayer-times %v: %v\n%s", args, err, combined)
+	}
+	return 0, string(combined)
 }
 
 func runCLI(t *testing.T, binary string, args ...string) string {
