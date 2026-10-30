@@ -1,0 +1,6 @@
+[Unit]
+Description=Prayer times desktop notification
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/prayer-times -notify-once

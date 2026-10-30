@@ -1,0 +1,11 @@
+[Unit]
+Description=Check for due prayer-time notifications every minute
+
+[Timer]
+OnCalendar=*:*:00
+AccuracySec=10s
+Persistent=true
+Unit=prayer-times-notify.service
+
+[Install]
+WantedBy=timers.target

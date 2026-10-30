@@ -75,6 +75,11 @@ Use `-lang id` for Indonesian CLI and TUI labels. The default language is Englis
 | `-date` | Today at the selected location | Print one Gregorian `YYYY-MM-DD` schedule and exit |
 | `-set-config` | `false` | Save the resolved config and exit; the selected method is saved explicitly |
 | `-lang` | `en` | Language: `en` or `id` |
+| `-notify-once` | `false` | Send at most one due desktop notification and exit |
+| `-dry-run` | `false` | With `-notify-once`, print the schedule as JSON instead of sending it |
+| `-notify-prayers` | all five prayers | Comma-separated list: `fajr,dhuhr,asr,maghrib,isha` |
+| `-notify-lead` | `0` | Minutes before the prayer to notify |
+| `-notify-grace` | `5` | Minutes after the prayer that still notify |
 | `-version` | `dev` | Print the application version |
 
 Methods: `kemenag`, `mwl`, `umm_al_qura`, `egyptian`, `karachi`, `isna`, `singapore`, `dubai`, `moonsighting_committee`, `kuwait`, `qatar`, and `uoif`.
@@ -83,7 +88,7 @@ Methods: `kemenag`, `mwl`, `umm_al_qura`, `egyptian`, `karachi`, `isna`, `singap
 
 ## Configuration
 
-The JSON config stores `location`, `options`, and `language`. Flags override matching file values. Older config files that omit `language` and `options.offsets` remain supported.
+The JSON config stores `location`, `options`, `notifications`, and `language`. Flags override matching file values. Older config files that omit `language`, `options.offsets`, and `notifications` remain supported.
 
 ```json
 {
@@ -108,6 +113,12 @@ The JSON config stores `location`, `options`, and `language`. Flags override mat
       "isha": 0
     }
   },
+  "notifications": {
+    "enabled": true,
+    "prayers": ["fajr", "dhuhr", "asr", "maghrib", "isha"],
+    "lead_minutes": 0,
+    "grace_minutes": 5
+  },
   "language": "en"
 }
 ```
@@ -121,6 +132,29 @@ Save the currently resolved settings (including the method selected from the tim
 ```bash
 prayer-times -config ./config.json -name London -lat 51.5072 -lon -0.1276 -tz Europe/London -set-config
 ```
+
+## Desktop notifications
+
+`-notify-once` sends at most one desktop notification for a prayer that is due and then exits, which suits a systemd user timer. The repository ships the units in `contrib/systemd/user/`:
+
+```bash
+mkdir -p ~/.config/systemd/user
+cp contrib/systemd/user/prayer-times-notify.* ~/.config/systemd/user/
+systemctl --user daemon-reload
+systemctl --user enable --now prayer-times-notify.timer
+```
+
+The timer checks every minute and catches up after a suspend or reboot. Change `ExecStart` in the service when the binary is elsewhere, such as `%h/go/bin/prayer-times` for a `go install` binary. The service does not enable the TUI; `-fullscreen` and other display flags are unrelated to it.
+
+Notifications use the freedesktop D-Bus interface, so they appear through whichever notification daemon the desktop session runs on X11 or Wayland. Without a reachable session bus, as on a server or over SSH, the command prints a warning and still exits successfully. Only one notification is sent per prayer: the last delivery is recorded in `$XDG_STATE_HOME/prayer-times/notified.json` (default `~/.local/state/prayer-times/notified.json`), so a repeated check does not duplicate it.
+
+Preview the schedule without sending anything or writing state:
+
+```bash
+prayer-times -notify-once -dry-run
+```
+
+The `notifications` config block accepts `enabled`, `prayers`, `lead_minutes`, and `grace_minutes`; `-notify-prayers`, `-notify-lead`, and `-notify-grace` override them for a single run and `-set-config` stores them. A notification is due from `lead_minutes` before the prayer until `grace_minutes` after it, and only the newest due prayer is delivered. Sunrise is never a notification target.
 
 ## NOW and NEXT
 
