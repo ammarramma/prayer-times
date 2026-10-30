@@ -10,6 +10,7 @@ import (
 
 	"github.com/ammarramma/prayer-times/internal/config"
 	"github.com/ammarramma/prayer-times/internal/i18n"
+	"github.com/ammarramma/prayer-times/internal/notify"
 	"github.com/ammarramma/prayer-times/internal/prayer"
 	"github.com/ammarramma/prayer-times/internal/tui"
 	tea "github.com/charmbracelet/bubbletea"
@@ -36,6 +37,11 @@ func main() {
 	dateFlag := flag.String("date", "", "Gregorian date YYYY-MM-DD (default: today at location)")
 	setConfig := flag.Bool("set-config", false, "save location/method options to config and exit")
 	language := flag.String("lang", "", "language: en or id")
+	notifyOnce := flag.Bool("notify-once", false, "send any due desktop notification and exit")
+	dryRun := flag.Bool("dry-run", false, "with -notify-once, print the notification schedule as JSON without sending it")
+	notifyPrayers := flag.String("notify-prayers", "", "comma-separated prayers to notify (fajr, dhuhr, asr, maghrib, isha)")
+	notifyLead := flag.Int("notify-lead", -1, "minutes before the prayer to notify")
+	notifyGrace := flag.Int("notify-grace", 0, "minutes after the prayer to still notify (default 5)")
 	showVersion := flag.Bool("version", false, "show application version")
 	flag.Parse()
 	if flag.NArg() > 0 {
@@ -97,11 +103,26 @@ func main() {
 	if flagWasSet("imsak") {
 		cfg.Options.IncludeImsak = *includeImsak
 	}
+	if err := applyNotifyFlags(&cfg, *notifyPrayers, *notifyLead, *notifyGrace); err != nil {
+		fail("notification settings", err)
+	}
 	if *setConfig {
 		if err := config.Save(*configPath, cfg); err != nil {
 			fail("saving config", err)
 		}
 		fmt.Printf("%s: %s\n", locale.ConfigSaved, *configPath)
+		return
+	}
+	if *notifyOnce {
+		options := notifyRunOptions{
+			DryRun: *dryRun,
+			Stdout: os.Stdout,
+			Stderr: os.Stderr,
+			Open:   func() (notify.Notifier, error) { return notify.NewDBusNotifier() },
+		}
+		if err := runNotifyOnce(cfg, locale, time.Now(), options); err != nil {
+			fail("notification", err)
+		}
 		return
 	}
 	location, err := time.LoadLocation(cfg.Location.Timezone)

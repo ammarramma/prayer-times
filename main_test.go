@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -117,6 +118,48 @@ func TestCLIRejectsUnknownLanguage(t *testing.T) {
 	}
 }
 
+func TestCLINotifyDryRunPrintsSchedule(t *testing.T) {
+	binary, workspace := buildCLITestBinary(t)
+	stateDir := filepath.Join(workspace, "state")
+	code, output := runCLIResultEnv(t, binary, []string{"XDG_STATE_HOME=" + stateDir},
+		"-config", filepath.Join(workspace, "unused.json"), "-notify-once", "-dry-run")
+	if code != 0 {
+		t.Fatalf("exit code = %d, want 0\n%s", code, output)
+	}
+	var report struct {
+		Location string `json:"location"`
+		Events   []struct {
+			Prayer string `json:"prayer"`
+		} `json:"events"`
+		Due *struct {
+			Prayer string `json:"prayer"`
+		} `json:"due"`
+	}
+	if err := json.Unmarshal([]byte(output), &report); err != nil {
+		t.Fatalf("dry run output is not JSON: %v\n%s", err, output)
+	}
+	if len(report.Events) != 6 {
+		t.Fatalf("events = %d, want 6\n%s", len(report.Events), output)
+	}
+	if report.Events[0].Prayer != "fajr" {
+		t.Errorf("first event = %q, want fajr", report.Events[0].Prayer)
+	}
+	if _, err := os.Stat(filepath.Join(stateDir, "prayer-times", "notified.json")); !os.IsNotExist(err) {
+		t.Errorf("dry run should not write state, stat error = %v", err)
+	}
+}
+
+func TestCLINotifyRejectsUnknownPrayer(t *testing.T) {
+	binary, workspace := buildCLITestBinary(t)
+	code, output := runCLIResult(t, binary, "-config", filepath.Join(workspace, "unused.json"), "-notify-once", "-notify-prayers", "sunrise")
+	if code != 2 {
+		t.Fatalf("exit code = %d, want 2\n%s", code, output)
+	}
+	if !strings.Contains(output, "unknown notification prayer") {
+		t.Fatalf("output should reject the unknown prayer:\n%s", output)
+	}
+}
+
 func buildCLITestBinary(t *testing.T) (binary, workspace string) {
 	t.Helper()
 	workspace, err := os.MkdirTemp(".", ".cli-integration-")
@@ -145,7 +188,17 @@ func buildCLITestBinary(t *testing.T) (binary, workspace string) {
 // instead of failing on a non-zero exit.
 func runCLIResult(t *testing.T, binary string, args ...string) (exitCode int, output string) {
 	t.Helper()
+	return runCLIResultEnv(t, binary, nil, args...)
+}
+
+// runCLIResultEnv runs the CLI with extra environment variables and reports its
+// exit code and combined output instead of failing on a non-zero exit.
+func runCLIResultEnv(t *testing.T, binary string, env []string, args ...string) (exitCode int, output string) {
+	t.Helper()
 	command := exec.Command(binary, args...)
+	if len(env) > 0 {
+		command.Env = append(os.Environ(), env...)
+	}
 	combined, err := command.CombinedOutput()
 	if err != nil {
 		if exitErr, ok := err.(*exec.ExitError); ok {

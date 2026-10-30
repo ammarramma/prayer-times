@@ -5,6 +5,7 @@ go 1.27.1
 require (
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/lipgloss v1.1.0
+	github.com/godbus/dbus/v5 v5.1.0
 	github.com/mnadev/adhango v0.1.0
 	github.com/spf13/viper v1.21.0
 )
